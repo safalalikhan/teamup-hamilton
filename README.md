@@ -6,16 +6,16 @@
 
 ## 🚀 Features
 
-- ✅ Secure user authentication (Firebase)
+- ✅ Secure user authentication
 - ✅ Player profiles with skill level and position preferences
 - ✅ Weekly availability input
-- ✅ Matchmaking engine (7v7 or 9v9 with balanced positions)
+- ✅ Matchmaking engine
 - ✅ Turf database with lighting, availability, and permission data
 - ✅ Turf suggestion system (distance, weather, daylight)
 - ✅ Travel time and departure planner (Google Distance Matrix API)
 - ✅ Real-time weather and daylight check (OpenWeatherMap, Sunrise-Sunset API)
 - ✅ Match dashboard with RSVP system
-- ✅ Real-time chat room per match (Firebase or Socket.IO)
+- ✅ Real-time chat room per match 
 - ✅ Last-minute join feature for cancellations
 
 ---
@@ -40,7 +40,7 @@
 | Frontend   | React.js, Tailwind CSS                |
 | Backend    | Node.js, Express.js                   |
 | Database   | MongoDB Atlas, Mongoose               |
-| Auth/Realtime | Firebase Authentication, Realtime DB |
+| Auth/Realtime | JWT Authentication, Realtime DB |
 | APIs       | Google Maps, Distance Matrix, OpenWeatherMap, Sunrise-Sunset |
 | Deployment | Vercel (frontend), Render (backend)   |
 | Design     | Figma                                 |

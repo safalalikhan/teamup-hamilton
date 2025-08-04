@@ -7,8 +7,8 @@ const jwt = require('jsonwebtoken');
 
 router.post('/register', async (req, res) => {
   try {
-    console.log("✅ [REGISTER] Hit endpoint");
-    console.log("Request body:", req.body);
+    //console.log("REGISTER Hit endpoint");
+    //console.log("Request body:", req.body);
     
     const { name, email, password, skillLevel, preferredPosition, location, availability } = req.body;
     // Check if user already exists

@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Features
+## 🚀 Features :
 
 - ✅ Secure user authentication
 - ✅ Player profiles with skill level and position preferences

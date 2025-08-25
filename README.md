@@ -1,4 +1,4 @@
-# ⚽ TeamUp Hamilton
+# ⚽ TeamUp Hamilton:
 
 **TeamUp Hamilton** is a smart football matchmaking and turf coordination web application designed for casual football players in Hamilton, New Zealand. The platform helps players find matches, form balanced teams, discover available turfs, and manage real-time logistics using live weather and travel data.
 

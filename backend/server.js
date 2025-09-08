@@ -11,14 +11,14 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-const authRoutes = require('./routes/auth');
-
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.url}`);
   next();
 });
 
-
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {

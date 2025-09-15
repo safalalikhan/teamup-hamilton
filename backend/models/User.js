@@ -1,33 +1,61 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    password: { type: String, required: true }, // hashed
+
     skillLevel: {
-        type: String,
-        enum: ['beginner', 'intermediate', 'proficient'],
-        default: 'beginner',
+      type: String,
+      enum: ['beginner', 'intermediate', 'proficient'],
+      default: 'beginner',
     },
+
     preferredPosition: {
-        type: String,
-        enum: ['goalKeeper', 'attack', 'midField', 'defence', 'noPreference'],
-        default: 'noPreference',
+      type: String,
+      enum: ['goalKeeper', 'attack', 'midField', 'defence', 'noPreference'],
+      default: 'noPreference',
     },
+
     location: {
-        address: String,
-        lat: Number,
-        lng: Number
+      address: { type: String, trim: true },
+      lat: Number,
+      lng: Number,
     },
-    availability: [{
+
+    availability: [
+      {
         day: {
-            type: String,
-            enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-            required: true
+          type: String,
+          enum: [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+          ],
+          required: true,
         },
-        startTime: { type: String, required: true }, // Format: "HH:mm"
-        endTime: { type: String, required: true }
-    }]
-}, { timestamps: true });
+        startTime: { type: String, required: true }, // "18:00"
+        endTime: { type: String, required: true },   // "20:00"
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+// Helpful index for lookups
+userSchema.index({ email: 1 }, { unique: true });
 
 module.exports = mongoose.model('User', userSchema);

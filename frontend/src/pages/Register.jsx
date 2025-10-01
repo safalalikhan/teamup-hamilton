@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import LocationPicker from '../components/LocationPicker';
@@ -8,7 +7,7 @@ import Layout from '../components/Layout';
 
 export default function Register() {
   const navigate = useNavigate();
-  const { setToken: setCtxToken, setUser: setCtxUser } = useAuth();
+  const { register: registerUser } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -63,28 +62,11 @@ export default function Register() {
     };
 
     setLoading(true);
-    api
-      .post('/api/auth/register', payload)
-      .then(async () => {
-        try {
-          const loginRes = await api.post('/api/auth/login', {
-            email: formData.email,
-            password: formData.password,
-          });
-          const { token, user } = loginRes.data || {};
-          if (token) {
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            setCtxToken(token);
-            setCtxUser(user);
-          }
-          setSuccess('User created successfully!');
-          setToast({ type: 'success', message: 'User created successfully!' });
-          setTimeout(() => navigate('/dashboard'), 800);
-        } catch (e) {
-          setToast({ type: 'success', message: 'User created. Please sign in.' });
-          setTimeout(() => navigate('/signin'), 800);
-        }
+    registerUser(payload)
+      .then(() => {
+        setSuccess('User created successfully!');
+        setToast({ type: 'success', message: 'User created successfully!' });
+        setTimeout(() => navigate('/dashboard'), 800);
       })
       .catch((err) => {
         const msg = err?.response?.data?.message || err?.response?.data?.error || 'Registration failed';
@@ -97,121 +79,123 @@ export default function Register() {
   return (
     <Layout>
       <Toast toast={toast} onClear={() => setToast({ type: '', message: '' })} />
-      <div className="max-w-md mx-auto">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-soft p-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Create your account</h2>
+      <div className="container">
+        <div className="row justify-content-center">
+          <div className="col-md-7 col-lg-6">
+            <div className="card shadow-sm">
+              <div className="card-body p-4 p-md-5">
+                <h2 className="h3 fw-semibold mb-4 text-center">Create your account</h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="w-full rounded-lg bg-red-50 text-red-800 border border-red-200 px-3 py-2 text-sm">
-                {error}
+                <form onSubmit={handleSubmit}>
+                  {error && (
+                    <div className="alert alert-danger" role="alert">{error}</div>
+                  )}
+                  {success && (
+                    <div className="alert alert-success" role="alert">{success}</div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="form-label">Full name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Your name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="you@example.com"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="••••••••"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="row g-3">
+                    <div className="col-sm-6">
+                      <label className="form-label">Skill level</label>
+                      <select
+                        name="skillLevel"
+                        value={formData.skillLevel}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="proficient">Advanced</option>
+                      </select>
+                    </div>
+                    <div className="col-sm-6">
+                      <label className="form-label">Preferred position</label>
+                      <select
+                        name="preferredPosition"
+                        value={formData.preferredPosition}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="noPreference">No preference</option>
+                        <option value="goalKeeper">Goalkeeper</option>
+                        <option value="defence">Defender</option>
+                        <option value="midField">Midfielder</option>
+                        <option value="attack">Forward</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <label className="form-label">Location</label>
+                    <LocationPicker
+                      value={{
+                        address: formData.locationAddress,
+                        lat: formData.lat ? Number(formData.lat) : undefined,
+                        lng: formData.lng ? Number(formData.lng) : undefined
+                      }}
+                      onChange={(loc) =>
+                        setFormData((f) => ({
+                          ...f,
+                          locationAddress: loc.address || '',
+                          lat: loc.lat || '',
+                          lng: loc.lng || ''
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`btn btn-primary w-100 mt-3 ${loading ? 'disabled' : ''}`}
+                  >
+                    {loading ? 'Creating…' : 'Create account'}
+                  </button>
+
+                  <p className="small text-muted text-center mt-3 mb-0">
+                    Already have an account?{' '}
+                    <Link to="/signin">Sign in</Link>
+                  </p>
+                </form>
               </div>
-            )}
-            {success && (
-              <div className="w-full rounded-lg bg-green-50 text-green-800 border border-green-200 px-3 py-2 text-sm">
-                {success}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Full name</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Your name"
-                value={formData.name}
-                onChange={handleChange}
-                className="input"
-              />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
-              <input
-                type="password"
-                name="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                className="input"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Skill level</label>
-                <select
-                  name="skillLevel"
-                  value={formData.skillLevel}
-                  onChange={handleChange}
-                  className="select"
-                >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="proficient">Advanced</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Preferred position</label>
-                <select
-                  name="preferredPosition"
-                  value={formData.preferredPosition}
-                  onChange={handleChange}
-                  className="select"
-                >
-                  <option value="noPreference">No preference</option>
-                  <option value="goalKeeper">Goalkeeper</option>
-                  <option value="defence">Defender</option>
-                  <option value="midField">Midfielder</option>
-                  <option value="attack">Forward</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Location</label>
-              <LocationPicker
-                value={{
-                  address: formData.locationAddress,
-                  lat: formData.lat ? Number(formData.lat) : undefined,
-                  lng: formData.lng ? Number(formData.lng) : undefined
-                }}
-                onChange={(loc) =>
-                  setFormData((f) => ({
-                    ...f,
-                    locationAddress: loc.address || '',
-                    lat: loc.lat || '',
-                    lng: loc.lng || ''
-                  }))
-                }
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`btn-brand w-full ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            >
-              {loading ? 'Creating…' : 'Create account'}
-            </button>
-
-            <p className="text-sm text-subtle text-center">
-              Already have an account?{' '}
-              <Link className="text-brand hover:underline" to="/signin">Sign in</Link>
-            </p>
-          </form>
+          </div>
         </div>
       </div>
     </Layout>

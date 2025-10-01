@@ -2,9 +2,11 @@ import React from 'react';
 
 export default function Spinner({ label = 'Loading…' }) {
   return (
-    <div className="flex items-center gap-3 text-subtle">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-      <span className="text-sm">{label}</span>
+    <div className="d-flex align-items-center gap-2 text-muted">
+      <div className="spinner-border text-primary" role="status" style={{ width: '1.25rem', height: '1.25rem' }}>
+        <span className="visually-hidden">Loading...</span>
+      </div>
+      <span className="small">{label}</span>
     </div>
   );
 }

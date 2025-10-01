@@ -5,11 +5,11 @@ import Layout from '../components/Layout';
 export default function NotFound() {
   return (
     <Layout>
-      <div className="min-h-[50vh] grid place-items-center text-center">
+      <div className="d-flex align-items-center justify-content-center text-center" style={{ minHeight: '50vh' }}>
         <div>
-          <h1 className="text-3xl font-semibold mb-2">Page not found</h1>
-          <p className="text-subtle mb-6">The page you’re after doesn’t exist.</p>
-          <Link to="/" className="btn-brand">Go home</Link>
+          <h1 className="h2 fw-semibold mb-2">Page not found</h1>
+          <p className="text-muted mb-4">The page you’re after doesn’t exist.</p>
+          <Link to="/" className="btn btn-primary">Go home</Link>
         </div>
       </div>
     </Layout>

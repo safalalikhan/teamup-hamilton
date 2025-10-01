@@ -59,39 +59,47 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" />
 
         <Card title="Create Match">
-          <form onSubmit={create} className="flex flex-col sm:flex-row gap-3">
-            <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="input sm:w-auto" />
-            <input type="text" placeholder="Time (optional)" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="input sm:w-auto" />
-            <select value={form.turf} onChange={(e) => setForm({ ...form, turf: e.target.value })} className="select sm:w-auto">
-              <option value="">Select turf (optional)</option>
-              {turfs.map((t) => (
-                <option key={t._id} value={t._id}>{t.name}</option>
-              ))}
-            </select>
-            <button disabled={creating} className={`btn-brand ${creating ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              {creating ? 'Creating...' : 'Create'}
-            </button>
+          <form onSubmit={create} className="row g-2 align-items-center">
+            <div className="col-12 col-sm-auto">
+              <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="form-control" />
+            </div>
+            <div className="col-12 col-sm-auto">
+              <input type="text" placeholder="Time (optional)" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="form-control" />
+            </div>
+            <div className="col-12 col-sm-auto">
+              <select value={form.turf} onChange={(e) => setForm({ ...form, turf: e.target.value })} className="form-select">
+                <option value="">Select turf (optional)</option>
+                {turfs.map((t) => (
+                  <option key={t._id} value={t._id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12 col-sm-auto">
+              <button disabled={creating} className={`btn btn-primary ${creating ? 'disabled' : ''}`}>
+                {creating ? 'Creating...' : 'Create'}
+              </button>
+            </div>
           </form>
         </Card>
 
         <Card title="Upcoming Matches" subtitle="Join an open game or create one above.">
-          {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
-          <ul className="divide-y">
+          {error && <div className="text-danger small mb-2">{error}</div>}
+          <ul className="list-group list-group-flush">
             {matches.map((m) => (
-              <li key={m._id} className="py-3 flex items-center justify-between">
+              <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="font-medium">{new Date(m.date).toLocaleString()}</div>
-                  <div className="text-sm text-gray-600">Players: {m.players?.length || 0}</div>
+                  <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                  <div className="small text-muted">Players: {m.players?.length || 0}</div>
                 </div>
-                <div className="flex gap-2">
-                  <Link to={`/matches/${m._id}`} className="btn-brand text-sm px-3 py-1">View</Link>
-                  <button onClick={() => join(m._id)} className="btn-brand text-sm px-3 py-1">Join</button>
-                  <button onClick={() => leave(m._id)} className="text-sm px-3 py-1 rounded bg-gray-200 hover:bg-gray-300">Leave</button>
+                <div className="d-flex gap-2">
+                  <Link to={`/matches/${m._id}`} className="btn btn-primary btn-sm">View</Link>
+                  <button onClick={() => join(m._id)} className="btn btn-primary btn-sm">Join</button>
+                  <button onClick={() => leave(m._id)} className="btn btn-outline-secondary btn-sm">Leave</button>
                 </div>
               </li>
             ))}
             {!loading && matches.length === 0 && (
-              <li className="py-6 text-gray-500 text-sm">No matches yet. Create one above.</li>
+              <li className="list-group-item text-muted small">No matches yet. Create one above.</li>
             )}
           </ul>
         </Card>

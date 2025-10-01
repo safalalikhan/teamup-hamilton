@@ -133,36 +133,34 @@ export default function Profile() {
 
       <Card>
         {loading ? (
-          <div className="py-6"><Spinner /></div>
+          <div className="py-3"><Spinner /></div>
         ) : (
-          <form onSubmit={onSave} className="space-y-6">
+          <form onSubmit={onSave}>
             {error && (
-              <div className="w-full rounded-lg bg-red-50 text-red-800 border border-red-200 px-3 py-2 text-sm">
-                {error}
-              </div>
+              <div className="alert alert-danger" role="alert">{error}</div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">Name</label>
                 <input
-                  className="input"
+                  className="form-control"
                   value={form.name}
                   onChange={(e) => updateField('name', e.target.value)}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+              <div className="col-md-6">
+                <label className="form-label">Email</label>
                 <input
-                  className="input"
+                  className="form-control"
                   value={form.email}
                   onChange={(e) => updateField('email', e.target.value)}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Skill level</label>
+              <div className="col-md-6">
+                <label className="form-label">Skill level</label>
                 <select
-                  className="select"
+                  className="form-select"
                   value={form.skillLevel}
                   onChange={(e) => updateField('skillLevel', e.target.value)}
                 >
@@ -171,10 +169,10 @@ export default function Profile() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Preferred position</label>
+              <div className="col-md-6">
+                <label className="form-label">Preferred position</label>
                 <select
-                  className="select"
+                  className="form-select"
                   value={form.preferredPosition}
                   onChange={(e) => updateField('preferredPosition', e.target.value)}
                 >
@@ -183,8 +181,8 @@ export default function Profile() {
                   ))}
                 </select>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Location</label>
+              <div className="col-12">
+                <label className="form-label">Location</label>
                 <LocationPicker
                   value={{
                     address: form.locationAddress,
@@ -203,66 +201,74 @@ export default function Profile() {
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="font-semibold">Weekly availability</h2>
+            <div className="mt-4">
+              <div className="d-flex align-items-center justify-content-between mb-2">
+                <h2 className="h6 fw-semibold mb-0">Weekly availability</h2>
                 <button
                   type="button"
                   onClick={addSlot}
-                  className="text-sm px-3 py-1 rounded-lg bg-brand text-white hover:bg-brand-dark"
+                  className="btn btn-primary btn-sm"
                 >
                   Add slot
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="d-flex flex-column gap-2">
                 {form.availability?.map((slot, idx) => (
-                  <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1fr,1fr,auto,1fr,auto] gap-2 items-center">
-                    <select
-                      className="select"
-                      value={slot.day}
-                      onChange={(e) => updateSlot(idx, 'day', e.target.value)}
-                    >
-                      {DAYS.map((d) => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="time"
-                      className="input"
-                      value={slot.startTime}
-                      onChange={(e) => updateSlot(idx, 'startTime', e.target.value)}
-                    />
-                    <span className="text-subtle text-center">to</span>
-                    <input
-                      type="time"
-                      className="input"
-                      value={slot.endTime}
-                      onChange={(e) => updateSlot(idx, 'endTime', e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeSlot(idx)}
-                      className="text-sm text-red-600 hover:underline justify-self-start"
-                    >
-                      Remove
-                    </button>
+                  <div key={idx} className="row g-2 align-items-center">
+                    <div className="col-sm">
+                      <select
+                        className="form-select"
+                        value={slot.day}
+                        onChange={(e) => updateSlot(idx, 'day', e.target.value)}
+                      >
+                        {DAYS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-sm">
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={slot.startTime}
+                        onChange={(e) => updateSlot(idx, 'startTime', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-auto text-muted">to</div>
+                    <div className="col-sm">
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={slot.endTime}
+                        onChange={(e) => updateSlot(idx, 'endTime', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-auto">
+                      <button
+                        type="button"
+                        onClick={() => removeSlot(idx)}
+                        className="btn btn-link text-danger p-0"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {!form.availability || form.availability.length === 0 ? (
-                  <div className="text-sm text-subtle">No availability set. Add a slot above.</div>
+                  <div className="small text-muted">No availability set. Add a slot above.</div>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="d-flex align-items-center gap-2 mt-3">
               <button
                 disabled={saving}
-                className={`btn-brand ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`btn btn-primary ${saving ? 'disabled' : ''}`}
               >
                 {saving ? 'Saving…' : 'Save profile'}
               </button>
-              <button type="button" onClick={load} className="btn-outline-brand">Reset</button>
+              <button type="button" onClick={load} className="btn btn-outline-secondary">Reset</button>
             </div>
           </form>
         )}

@@ -92,28 +92,28 @@ export default function LocationPicker({ value, onChange, height = 280, defaultC
 
   if (!apiKey) {
     return (
-      <div className="space-y-2">
+      <div className="d-flex flex-column gap-2">
         <input
           ref={inputRef}
           defaultValue={value?.address || ''}
           onChange={(e) => onChange?.({ address: e.target.value, lat: value?.lat, lng: value?.lng })}
           placeholder="Address"
-          className="mt-1 block w-full rounded-lg border-gray-300 focus:border-brand focus:ring-brand"
+          className="form-control"
         />
-        <div className="text-xs text-subtle">Add VITE_GOOGLE_MAPS_API_KEY to enable map.</div>
+        <div className="small text-muted">Add VITE_GOOGLE_MAPS_API_KEY to enable map.</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="d-flex flex-column gap-2">
       <input
         ref={inputRef}
         defaultValue={value?.address || ''}
         placeholder="Search address"
-        className="mt-1 block w-full rounded-lg border-gray-300 focus:border-brand focus:ring-brand"
+        className="form-control"
       />
-      <div ref={mapRef} style={containerStyle} className="rounded-lg border border-gray-200" />
+      <div ref={mapRef} style={{ ...containerStyle, borderRadius: '0.5rem', border: '1px solid #e5e7eb' }} />
     </div>
   );
 }

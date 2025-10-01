@@ -98,9 +98,9 @@ export default function Turfs() {
         subtitle="Find suitable grounds and add new ones you know."
       />
 
-      <Card title="Map Overview" className="mb-6">
+      <Card title="Map Overview" className="mb-3">
         {loading ? (
-          <div className="py-4"><Spinner label="Loading map…" /></div>
+          <div className="py-3"><Spinner label="Loading map…" /></div>
         ) : (
           <GoogleMap
             center={{ lat: -37.787, lng: 175.279 }}
@@ -109,123 +109,109 @@ export default function Turfs() {
           />
         )}
       </Card>
+      <div className="row g-4 mb-4">
+        <div className="col-lg-6">
+          <Card title="Filters" subtitle="Narrow down by amenities">
+            <form onSubmit={onFilter} className="row g-3">
+              {['lighting', 'hasGoalposts', 'isBookable'].map((k) => (
+                <div key={k} className="col-sm-6">
+                  <label className="form-label text-capitalize">{k}</label>
+                  <select
+                    value={filters[k]}
+                    onChange={(e) => setFilters({ ...filters, [k]: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="">Any</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              ))}
+              <div className="col-12">
+                <button className="btn btn-primary">Apply</button>
+              </div>
+            </form>
+          </Card>
+        </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        <Card title="Filters" subtitle="Narrow down by amenities">
-          <form onSubmit={onFilter} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {['lighting', 'hasGoalposts', 'isBookable'].map((k) => (
-              <label key={k} className="block">
-                <span className="block text-sm font-medium capitalize mb-1">{k}</span>
-                <select
-                  value={filters[k]}
-                  onChange={(e) => setFilters({ ...filters, [k]: e.target.value })}
-                  className="select"
-                >
-                  <option value="">Any</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-              </label>
-            ))}
-            <div className="sm:col-span-2">
-              <button className="btn-brand">Apply</button>
-            </div>
-          </form>
-        </Card>
-
-        <Card title="Create Turf" subtitle="Add a new community ground">
-          <form onSubmit={createTurf} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                className="input"
-                placeholder="e.g., Claudelands Park 5-a-side"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Location</label>
-              <LocationPicker
-                value={{ address: form.address || '', lat: form.lat, lng: form.lng }}
-                onChange={(loc) =>
-                  setForm((f) => ({
-                    ...f,
-                    address: loc.address || '',
-                    lat: loc.lat,
-                    lng: loc.lng,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="flex items-center gap-2 text-sm">
+        <div className="col-lg-6">
+          <Card title="Create Turf" subtitle="Add a new community ground">
+            <form onSubmit={createTurf}>
+              <div className="mb-3">
+                <label className="form-label">Name</label>
                 <input
-                  type="checkbox"
-                  checked={form.lighting}
-                  onChange={(e) => setForm({ ...form, lighting: e.target.checked })}
+                  className="form-control"
+                  placeholder="e.g., Claudelands Park 5-a-side"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
-                Lighting
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.hasGoalposts}
-                  onChange={(e) => setForm({ ...form, hasGoalposts: e.target.checked })}
-                />
-                Goalposts
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.isBookable}
-                  onChange={(e) => setForm({ ...form, isBookable: e.target.checked })}
-                />
-                Bookable
-              </label>
-            </div>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Available time slots (comma separated)
-              </label>
-              <input
-                className="input"
-                placeholder="e.g., 18:00-19:00, 19:00-20:00"
-                value={form.availableTimeSlots}
-                onChange={(e) => setForm({ ...form, availableTimeSlots: e.target.value })}
-              />
-            </div>
+              <div className="mb-3">
+                <label className="form-label">Location</label>
+                <LocationPicker
+                  value={{ address: form.address || '', lat: form.lat, lng: form.lng }}
+                  onChange={(loc) =>
+                    setForm((f) => ({
+                      ...f,
+                      address: loc.address || '',
+                      lat: loc.lat,
+                      lng: loc.lng,
+                    }))
+                  }
+                />
+              </div>
 
-            <button
-              disabled={creating}
-              className={`btn-brand ${creating ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {creating ? 'Creating…' : 'Create Turf'}
-            </button>
-          </form>
-        </Card>
+              <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="lighting" checked={form.lighting} onChange={(e) => setForm({ ...form, lighting: e.target.checked })} />
+                  <label className="form-check-label" htmlFor="lighting">Lighting</label>
+                </div>
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="goalposts" checked={form.hasGoalposts} onChange={(e) => setForm({ ...form, hasGoalposts: e.target.checked })} />
+                  <label className="form-check-label" htmlFor="goalposts">Goalposts</label>
+                </div>
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="bookable" checked={form.isBookable} onChange={(e) => setForm({ ...form, isBookable: e.target.checked })} />
+                  <label className="form-check-label" htmlFor="bookable">Bookable</label>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Available time slots (comma separated)</label>
+                <input
+                  className="form-control"
+                  placeholder="e.g., 18:00-19:00, 19:00-20:00"
+                  value={form.availableTimeSlots}
+                  onChange={(e) => setForm({ ...form, availableTimeSlots: e.target.value })}
+                />
+              </div>
+
+              <button disabled={creating} className={`btn btn-primary ${creating ? 'disabled' : ''}`}>
+                {creating ? 'Creating…' : 'Create Turf'}
+              </button>
+            </form>
+          </Card>
+        </div>
       </div>
 
       <Card title="All Turfs">
-        {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
+        {error && <div className="text-danger small mb-3">{error}</div>}
 
         {loading ? (
-          <div className="py-4"><Spinner label="Loading turfs…" /></div>
+          <div className="py-3"><Spinner label="Loading turfs…" /></div>
         ) : turfs.length === 0 ? (
-          <div className="py-6 text-sm text-subtle">No turfs found.</div>
+          <div className="py-4 small text-muted">No turfs found.</div>
         ) : (
-          <ul className="divide-y divide-gray-200">
+          <ul className="list-group list-group-flush">
             {turfs.map((t) => (
-              <li key={t._id} className="py-3">
-                <div className="font-medium">{t.name}</div>
-                <div className="text-sm text-subtle">
+              <li key={t._id} className="list-group-item">
+                <div className="fw-semibold">{t.name}</div>
+                <div className="small text-muted">
                   {t.location?.address || 'No address'} · Lighting: {String(!!t.lighting)} · Goalposts: {String(!!t.hasGoalposts)} · Bookable: {String(!!t.isBookable)}
                 </div>
                 {t.availableTimeSlots?.length > 0 && (
-                  <div className="text-xs text-subtle mt-1">
+                  <div className="small text-muted mt-1">
                     Slots: {t.availableTimeSlots.join(', ')}
                   </div>
                 )}

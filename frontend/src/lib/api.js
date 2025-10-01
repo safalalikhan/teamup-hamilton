@@ -34,12 +34,11 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
-    if (status === 401) {
+    if (status === 401 || status === 403) {
       try {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       } catch {}
-      // Optional: preserve "from" path via router if you add a helper; for now redirect
       if (typeof window !== 'undefined') window.location.href = '/signin';
     }
     return Promise.reject(err);

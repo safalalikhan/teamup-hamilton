@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-ink">
-        <div className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full bg-brand" />
-          <span className="font-semibold">TeamUp Hamilton</span>
+    <footer className="border-top bg-white">
+      <div className="container py-3 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 text-dark">
+        <div className="d-flex align-items-center gap-2">
+          <span className="d-inline-block rounded-circle" style={{ backgroundColor: 'var(--bs-primary)', width: 8, height: 8 }} />
+          <span className="fw-semibold">TeamUp Hamilton</span>
         </div>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link to="/" className="hover:text-brand-dark">Home</Link>
-          <Link to="/dashboard" className="hover:text-brand-dark">Dashboard</Link>
-          <Link to="/turfs" className="hover:text-brand-dark">Turfs</Link>
-          <Link to="/profile" className="hover:text-brand-dark">Profile</Link>
+        <nav className="d-flex align-items-center gap-3 small">
+          <Link to="/" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Home</Link>
+          <Link to="/dashboard" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Dashboard</Link>
+          <Link to="/turfs" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Turfs</Link>
+          <Link to="/profile" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Profile</Link>
         </nav>
-        <div className="text-xs text-subtle">© {new Date().getFullYear()} TeamUp Hamilton</div>
+        <div className="text-muted small">© {new Date().getFullYear()} TeamUp Hamilton</div>
       </div>
     </footer>
   );

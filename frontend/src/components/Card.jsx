@@ -2,17 +2,17 @@ import React from 'react';
 
 export default function Card({ title, subtitle, actions, children, className = '' }) {
   return (
-    <section className={`bg-white border border-gray-200 rounded-2xl shadow-soft ${className}`}>
+    <section className={`card shadow-sm ${className}`}>
       {(title || actions || subtitle) && (
-        <div className="px-4 sm:px-5 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+        <div className="card-header d-flex align-items-center justify-content-between gap-2 bg-white">
           <div>
-            {title && <h2 className="text-base sm:text-lg font-semibold">{title}</h2>}
-            {subtitle && <p className="text-xs sm:text-sm text-subtle">{subtitle}</p>}
+            {title && <h2 className="h6 fw-semibold mb-0">{title}</h2>}
+            {subtitle && <p className="small text-muted mb-0">{subtitle}</p>}
           </div>
           {actions}
         </div>
       )}
-      <div className="p-4 sm:p-5">
+      <div className="card-body">
         {children}
       </div>
     </section>

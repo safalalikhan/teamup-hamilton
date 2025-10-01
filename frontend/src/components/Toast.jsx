@@ -10,17 +10,13 @@ export default function Toast({ toast, onClear, duration = 2500 }) {
   if (!toast?.message) return null;
 
   const ok = toast.type === 'success';
-  const styles = ok
-    ? 'bg-green-50 text-green-800 border-green-200'
-    : 'bg-red-50 text-red-800 border-red-200';
+  const klass = ok ? 'alert alert-success' : 'alert alert-danger';
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={`fixed top-4 right-4 z-50 max-w-sm rounded-xl border px-4 py-3 shadow-soft ${styles}`}
-    >
-      <p className="text-sm">{toast.message}</p>
+    <div role="status" aria-live="polite" className="position-fixed top-0 end-0 m-3" style={{ zIndex: 1050, maxWidth: '24rem' }}>
+      <div className={klass}>
+        <p className="mb-0 small">{toast.message}</p>
+      </div>
     </div>
   );
 }

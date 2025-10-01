@@ -42,5 +42,5 @@ export default function GoogleMap({ center, markers = [], height = 300, zoom = 1
   }, [apiKey, center?.lat, center?.lng, JSON.stringify(markers)]);
 
   if (!apiKey || !center?.lat || !center?.lng) return null;
-  return <div ref={ref} style={{ width: '100%', height }} className="rounded-lg border border-gray-200" />;
+  return <div ref={ref} style={{ width: '100%', height, borderRadius: '0.5rem', border: '1px solid #e5e7eb' }} />;
 }

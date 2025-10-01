@@ -35,7 +35,7 @@ function MapView({ lat, lng, height = 240 }) {
   }, [apiKey, lat, lng]);
 
   if (!lat || !lng) return null;
-  return <div ref={ref} style={{ width: '100%', height }} className="rounded-2xl border border-gray-200" />;
+  return <div ref={ref} style={{ width: '100%', height, borderRadius: '0.75rem', border: '1px solid #e5e7eb' }} />;
 }
 
 export default function MatchDetail() {
@@ -101,81 +101,88 @@ export default function MatchDetail() {
       <PageHeader title="Match details" />
 
       {loading ? (
-        <div className="py-6"><Spinner /></div>
+        <div className="py-3"><Spinner /></div>
       ) : error ? (
-        <div className="text-red-600">{error}</div>
+        <div className="text-danger">{error}</div>
       ) : !match ? (
-        <div className="text-subtle">Match not found.</div>
+        <div className="text-muted">Match not found.</div>
       ) : (
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">{match.turf?.name || 'Match'}</h1>
-              <div className="text-subtle">
-                {match.date ? new Date(match.date).toLocaleString() : 'Date TBD'}
-              </div>
-              {match.turf?.name && (
-                <div className="text-sm text-subtle">
-                  Turf: {match.turf.name}
-                  {match.turf?.location?.address ? ` — ${match.turf.location.address}` : ''}
+        <div className="row g-4">
+          <div className="col-lg-6">
+            <Card>
+              <div>
+                <h1 className="h4 fw-semibold mb-1">{match.turf?.name || 'Match'}</h1>
+                <div className="text-muted small">
+                  {match.date ? new Date(match.date).toLocaleString() : 'Date TBD'}
                 </div>
-              )}
+                {match.turf?.name && (
+                  <div className="small text-muted mt-1">
+                    Turf: {match.turf.name}
+                    {match.turf?.location?.address ? ` — ${match.turf.location.address}` : ''}
+                  </div>
+                )}
 
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={join} className="btn-brand">Join</button>
-                <button onClick={leave} className="btn btn-outline-brand">Leave</button>
-              </div>
-
-              {match.turf?.location?.lat && match.turf?.location?.lng && (
-                <div className="mt-4">
-                  <MapView
-                    lat={Number(match.turf.location.lat)}
-                    lng={Number(match.turf.location.lng)}
-                  />
+                <div className="mt-3 d-flex flex-wrap gap-2">
+                  <button onClick={join} className="btn btn-primary">Join</button>
+                  <button onClick={leave} className="btn btn-outline-secondary">Leave</button>
                 </div>
-              )}
+
+                {match.turf?.location?.lat && match.turf?.location?.lng && (
+                  <div className="mt-3">
+                    <MapView
+                      lat={Number(match.turf.location.lat)}
+                      lng={Number(match.turf.location.lng)}
+                    />
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+
+          <div className="col-lg-6">
+            <div className="row g-4">
+              <div className="col-md-6">
+                <Card title={`Players (${match.players?.length || 0})`}>
+                  {(!match.players || match.players.length === 0) ? (
+                    <div className="small text-muted">No players yet.</div>
+                  ) : (
+                    <ul className="list-group list-group-flush">
+                      {match.players.map((p) => (
+                        <li key={p._id} className="list-group-item">
+                          <div className="fw-semibold">{p.name || p.email}</div>
+                          <div className="small text-muted">{p.email}</div>
+                          <div className="small text-muted">
+                            {p.skillLevel} · {p.preferredPosition}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              </div>
+              <div className="col-md-6">
+                <Card title="Team split (preview)">
+                  <div className="row g-3 small">
+                    <div className="col-6">
+                      <div className="fw-semibold mb-2">Team A</div>
+                      <ul className="ps-3">
+                        {split.teamA.map((p) => (
+                          <li key={p._id}>{p.name || p.email}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="col-6">
+                      <div className="fw-semibold mb-2">Team B</div>
+                      <ul className="ps-3">
+                        {split.teamB.map((p) => (
+                          <li key={p._id}>{p.name || p.email}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </div>
-          </Card>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card title={`Players (${match.players?.length || 0})`}>
-              {(!match.players || match.players.length === 0) ? (
-                <div className="text-sm text-subtle">No players yet.</div>
-              ) : (
-                <ul className="text-sm divide-y divide-gray-200">
-                  {match.players.map((p) => (
-                    <li key={p._id} className="py-2">
-                      <div className="font-medium">{p.name || p.email}</div>
-                      <div className="text-subtle">{p.email}</div>
-                      <div className="text-subtle">
-                        {p.skillLevel} · {p.preferredPosition}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-
-            <Card title="Team split (preview)">
-              <div className="grid grid-cols-2 gap-6 text-sm">
-                <div>
-                  <div className="font-medium mb-2">Team A</div>
-                  <ul className="list-disc ml-5 space-y-1">
-                    {split.teamA.map((p) => (
-                      <li key={p._id}>{p.name || p.email}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-medium mb-2">Team B</div>
-                  <ul className="list-disc ml-5 space-y-1">
-                    {split.teamB.map((p) => (
-                      <li key={p._id}>{p.name || p.email}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Card>
           </div>
         </div>
       )}

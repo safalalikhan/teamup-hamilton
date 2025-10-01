@@ -1,105 +1,65 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const linkClass = ({ isActive }) =>
-  `block px-3 py-2 rounded-lg text-sm font-medium transition
-   ${isActive ? 'bg-green-50 text-green-800' : 'text-ink hover:bg-gray-100'}`;
 
 export default function Navbar() {
   const { user, token, signOut } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
 
   const handleSignOut = () => {
     signOut();
     navigate('/signin');
   };
 
+  const linkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-ink">
-            <span className="inline-block h-2 w-2 rounded-full bg-brand" />
+    <header className="sticky-top bg-white border-bottom">
+      <nav className="navbar navbar-expand-md navbar-light bg-body-tertiary">
+        <div className="container">
+          <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
+            <span className="d-inline-block rounded-circle" style={{ backgroundColor: 'var(--bs-primary)', width: 8, height: 8 }} />
             TeamUp Hamilton
           </Link>
 
-          <nav className="hidden md:flex items-center gap-2">
-            <NavLink to="/" className={linkClass} end>Home</NavLink>
-            <NavLink to="/turfs" className={linkClass}>Turfs</NavLink>
-            {token && <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>}
-            {token && <NavLink to="/profile" className={linkClass}>Profile</NavLink>}
-          </nav>
-
-          <div className="hidden md:flex items-center gap-3">
-            {token ? (
-              <>
-                <span className="text-sm text-subtle truncate max-w-[12rem]">
-                  {user?.name || user?.email}
-                </span>
-                <button
-                  onClick={handleSignOut}
-                  className="inline-flex items-center rounded-lg bg-brand px-3 py-2 text-white hover:bg-brand-dark transition"
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/signin" className="text-sm px-3 py-2 rounded-lg hover:bg-gray-100">Sign in</Link>
-                <Link
-                  to="/signup"
-                  className="inline-flex items-center rounded-lg bg-brand px-3 py-2 text-white hover:bg-brand-dark transition"
-                >
-                  Join now
-                </Link>
-              </>
-            )}
-          </div>
-
           <button
-            className="md:hidden inline-flex items-center justify-center rounded-lg p-2 hover:bg-gray-100"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Toggle menu"
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarMain"
+            aria-controls="navbarMain"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
           >
-            <span className="sr-only">Toggle navigation</span>
-            <span className="text-2xl leading-none">☰</span>
+            <span className="navbar-toggler-icon"></span>
           </button>
-        </div>
-      </div>
 
-      {open && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <div className="px-4 py-3 flex flex-col gap-2">
-            <NavLink to="/" className={linkClass} end onClick={() => setOpen(false)}>Home</NavLink>
-            <NavLink to="/turfs" className={linkClass} onClick={() => setOpen(false)}>Turfs</NavLink>
-            {token && <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>Dashboard</NavLink>}
-            {token && <NavLink to="/profile" className={linkClass} onClick={() => setOpen(false)}>Profile</NavLink>}
-            <div className="pt-2 border-t border-gray-200">
+          <div className="collapse navbar-collapse" id="navbarMain">
+            <ul className="navbar-nav me-auto mb-2 mb-md-0">
+              <li className="nav-item"><NavLink to="/" end className={linkClass}>Home</NavLink></li>
+              <li className="nav-item"><NavLink to="/turfs" className={linkClass}>Turfs</NavLink></li>
+              {token && <li className="nav-item"><NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink></li>}
+              {token && <li className="nav-item"><NavLink to="/profile" className={linkClass}>Profile</NavLink></li>}
+            </ul>
+
+            <div className="d-flex align-items-center gap-2">
               {token ? (
-                <button
-                  onClick={() => { setOpen(false); handleSignOut(); }}
-                  className="w-full inline-flex items-center justify-center rounded-lg bg-brand px-3 py-2 text-white hover:bg-brand-dark transition"
-                >
-                  Sign out
-                </button>
+                <>
+                  <span className="text-muted small text-truncate" style={{ maxWidth: '12rem' }}>
+                    {user?.name || user?.email}
+                  </span>
+                  <button onClick={handleSignOut} className="btn btn-primary btn-sm">Sign out</button>
+                </>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Link to="/signin" onClick={() => setOpen(false)} className="text-sm px-3 py-2 rounded-lg hover:bg-gray-100">Sign in</Link>
-                  <Link
-                    to="/signup"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex items-center justify-center rounded-lg bg-brand px-3 py-2 text-white hover:bg-brand-dark transition"
-                  >
-                    Join now
-                  </Link>
-                </div>
+                <>
+                  <Link to="/signin" className="btn btn-outline-primary btn-sm">Sign in</Link>
+                  <Link to="/signup" className="btn btn-primary btn-sm">Join now</Link>
+                </>
               )}
             </div>
           </div>
         </div>
-      )}
+      </nav>
     </header>
   );
 }

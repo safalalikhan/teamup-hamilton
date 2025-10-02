@@ -10,10 +10,13 @@ function computeDerived(m) {
   const isPast = start < now;
   const isToday = start.toDateString() === now.toDateString();
   const startsInMinutes = Math.round((start.getTime() - now.getTime()) / 60000);
-  const goingCount = (m.rsvps || []).filter((r) => r.status === 'going').length || (m.players ? m.players.length : 0);
+  const rsvps = Array.isArray(m.rsvps) ? m.rsvps : [];
+  const goingCount = rsvps.filter((r) => r.status === 'going').length || (m.players ? m.players.length : 0);
+  const maybeCount = rsvps.filter((r) => r.status === 'maybe').length;
+  const notGoingCount = rsvps.filter((r) => r.status === 'not_going').length;
   const capacity = m.capacity ?? null;
   const spotsLeft = capacity != null ? Math.max(0, capacity - goingCount) : null;
-  return { isPast, isToday, startsInMinutes, goingCount, spotsLeft };
+  return { isPast, isToday, startsInMinutes, goingCount, maybeCount, notGoingCount, spotsLeft };
 }
 
 router.get('/', async (_req, res) => {
@@ -68,6 +71,33 @@ router.post('/', verifyToken, async (req, res) => {
       capacity: typeof capacity === 'number' ? capacity : (capacity ? Number(capacity) : undefined),
     });
     return res.status(201).json(match);
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update match (capacity only for now) — owner or admin
+router.patch('/:id', verifyToken, async (req, res) => {
+  try {
+    const match = await Match.findById(req.params.id);
+    if (!match) return res.status(404).json({ message: 'Match not found' });
+    const isOwner = String(match.createdBy || '') === String(req.user.userId || '');
+    const isAdmin = String(req.user.role || '') === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    if ('capacity' in req.body) {
+      const raw = req.body.capacity;
+      const capNum = Number(raw);
+      if (!Number.isFinite(capNum) || capNum < 0) {
+        return res.status(400).json({ message: 'Invalid capacity' });
+      }
+      match.capacity = capNum > 0 ? capNum : undefined;
+    }
+
+    await match.save();
+    const obj = match.toObject({ virtuals: true });
+    Object.assign(obj, computeDerived(obj));
+    return res.json(obj);
   } catch (err) {
     return res.status(500).json({ message: 'Server error' });
   }

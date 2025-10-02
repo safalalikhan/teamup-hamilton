@@ -54,8 +54,10 @@ export default function Dashboard() {
     } catch (e) {
       if (e?.response?.status === 409) {
         setError('Match is full');
-        setTimeout(() => setError(''), 2500);
+      } else {
+        setError('Unable to update RSVP. Please try again.');
       }
+      setTimeout(() => setError(''), 2500);
     } finally {
       setPending({ id: null, action: null });
     }
@@ -120,7 +122,12 @@ export default function Dashboard() {
                       <span>{new Date(m.date).toLocaleString()}</span>
                       {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
                     </div>
-                    <div className="small text-muted">Players: {m.players?.length || 0}{spotsLeft != null && ` · Spots left: ${spotsLeft}`}</div>
+                    <div className="small text-muted">
+                      Going: {m.goingCount ?? (m.players?.length || 0)}
+                      {typeof m.maybeCount === 'number' ? ` · Maybe: ${m.maybeCount}` : ''}
+                      {typeof m.notGoingCount === 'number' ? ` · Not going: ${m.notGoingCount}` : ''}
+                      {spotsLeft != null ? ` · Spots left: ${spotsLeft}` : ''}
+                    </div>
                   </div>
                   <div className="d-flex gap-1">
                     <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm">View</Link>

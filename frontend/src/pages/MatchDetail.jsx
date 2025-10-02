@@ -48,6 +48,8 @@ export default function MatchDetail() {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [segment, setSegment] = useState('upcoming');
+  const [capEdit, setCapEdit] = useState('');
+  const [capSaving, setCapSaving] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function MatchDetail() {
 
   const userId = user?._id || user?.id;
   const isPast = match?.date ? new Date(match.date).getTime() < Date.now() : false;
+  const canEditCapacity = Boolean(user?.role === 'admin' || (match?.createdBy && String(match.createdBy) === String(userId)));
 
   const isParticipant = useMemo(() => {
     if (!match?.players || !userId) return false;
@@ -94,6 +97,22 @@ export default function MatchDetail() {
     } finally {
       setJoining(false);
       setLeaving(false);
+    }
+  };
+
+  const saveCapacity = async () => {
+    if (!canEditCapacity) return;
+    setCapSaving(true);
+    try {
+      const capNum = Number(capEdit);
+      const payload = { capacity: Number.isFinite(capNum) && capNum > 0 ? capNum : 0 };
+      const { data } = await api.patch(`/api/matches/${id}`, payload);
+      setMatch(data);
+      setToast({ type: 'success', message: 'Capacity updated' });
+    } catch (e) {
+      setToast({ type: 'error', message: 'Failed to update capacity' });
+    } finally {
+      setCapSaving(false);
     }
   };
 
@@ -134,6 +153,22 @@ export default function MatchDetail() {
                 )}
 
                 <div className="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                  {canEditCapacity && (
+                    <div className="d-flex align-items-center gap-2 me-3">
+                      <label className="form-label mb-0 small">Capacity</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-control form-control-sm"
+                        style={{ width: 120 }}
+                        value={capEdit}
+                        onChange={(e) => setCapEdit(e.target.value)}
+                        placeholder={match.capacity ? String(match.capacity) : 'No limit'}
+                      />
+                      <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={saveCapacity}>{capSaving ? 'Saving…' : 'Save'}</button>
+                      <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={() => setCapEdit('')}>Reset</button>
+                    </div>
+                  )}
                   <div className="btn-group btn-group-sm" role="group" aria-label="View segment">
                     <button className={`btn ${segment === 'upcoming' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('upcoming')}>
                       Upcoming

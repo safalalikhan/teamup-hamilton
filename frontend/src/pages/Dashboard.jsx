@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ date: '', time: '', turf: '' });
+  const [form, setForm] = useState({ date: '', time: '', turf: '', capacity: '' });
   const [turfs, setTurfs] = useState([]);
   const [pending, setPending] = useState({ id: null, action: null });
   const { user } = useAuth();
@@ -51,6 +51,11 @@ export default function Dashboard() {
     try {
       await api.post(`/api/matches/${id}/rsvp`, { status });
       await loadMatches();
+    } catch (e) {
+      if (e?.response?.status === 409) {
+        setError('Match is full');
+        setTimeout(() => setError(''), 2500);
+      }
     } finally {
       setPending({ id: null, action: null });
     }
@@ -61,8 +66,11 @@ export default function Dashboard() {
     if (!form.date) return;
     setCreating(true);
     try {
-      await api.post('/api/matches', { date: form.date, time: form.time || undefined, turf: form.turf || undefined });
-      setForm({ date: '', time: '', turf: '' });
+      const payload = { date: form.date, time: form.time || undefined, turf: form.turf || undefined };
+      const capNum = Number(form.capacity);
+      if (!Number.isNaN(capNum) && capNum > 0) payload.capacity = capNum;
+      await api.post('/api/matches', payload);
+      setForm({ date: '', time: '', turf: '', capacity: '' });
       await loadMatches();
     } finally {
       setCreating(false);

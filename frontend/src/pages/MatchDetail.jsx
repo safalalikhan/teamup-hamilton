@@ -47,6 +47,7 @@ export default function MatchDetail() {
   const [toast, setToast] = useState({ type: '', message: '' });
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [segment, setSegment] = useState('upcoming');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function MatchDetail() {
   useEffect(() => { load(); }, [id]);
 
   const userId = user?._id || user?.id;
+  const isPast = match?.date ? new Date(match.date).getTime() < Date.now() : false;
 
   const isParticipant = useMemo(() => {
     if (!match?.players || !userId) return false;
@@ -86,8 +88,9 @@ export default function MatchDetail() {
       await api.post(`/api/matches/${id}/rsvp`, { status });
       setToast({ type: 'success', message: status === 'not_going' ? 'Updated RSVP' : 'RSVP saved' });
       await load();
-    } catch {
-      setToast({ type: 'error', message: 'Failed to update RSVP' });
+    } catch (e) {
+      const msg = e?.response?.status === 409 ? 'Match is full' : 'Failed to update RSVP';
+      setToast({ type: 'error', message: msg });
     } finally {
       setJoining(false);
       setLeaving(false);
@@ -130,13 +133,27 @@ export default function MatchDetail() {
                   </div>
                 )}
 
-                <div className="mt-3 d-flex flex-wrap gap-2">
-                  <div className="btn-group">
-                    <button onClick={() => rsvp('going')} className="btn btn-primary" disabled={!userId || joining || isParticipant}>{joining ? '...' : 'Going'}</button>
-                    <button onClick={() => rsvp('maybe')} className="btn btn-outline-secondary" disabled={!userId}>Maybe</button>
-                    <button onClick={() => rsvp('not_going')} className="btn btn-outline-secondary" disabled={!userId || leaving}>{leaving ? '...' : 'Not going'}</button>
+                <div className="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                  <div className="btn-group btn-group-sm" role="group" aria-label="View segment">
+                    <button className={`btn ${segment === 'upcoming' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('upcoming')}>
+                      Upcoming
+                    </button>
+                    <button className={`btn ${segment === 'past' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('past')}>
+                      Past
+                    </button>
                   </div>
+                  {isPast && <span className="badge bg-secondary">Completed</span>}
                 </div>
+
+                {segment === 'upcoming' && !isPast && (
+                  <div className="mt-2 d-flex flex-wrap gap-2">
+                    <div className="btn-group">
+                      <button onClick={() => rsvp('going')} className="btn btn-primary" disabled={!userId || joining || isParticipant}>{joining ? '...' : 'Going'}</button>
+                      <button onClick={() => rsvp('maybe')} className="btn btn-outline-secondary" disabled={!userId}>Maybe</button>
+                      <button onClick={() => rsvp('not_going')} className="btn btn-outline-secondary" disabled={!userId || leaving}>{leaving ? '...' : 'Not going'}</button>
+                    </div>
+                  </div>
+                )}
 
                 {match.turf?.location?.lat && match.turf?.location?.lng && (
                   <div className="mt-3">

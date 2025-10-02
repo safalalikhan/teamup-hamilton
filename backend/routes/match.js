@@ -57,7 +57,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { date, time, turf } = req.body;
+    const { date, time, turf, capacity } = req.body;
     if (!date) return res.status(400).json({ message: 'date is required' });
     const match = await Match.create({
       date,
@@ -65,6 +65,7 @@ router.post('/', verifyToken, async (req, res) => {
       turf,
       createdBy: req.user.userId,
       players: [],
+      capacity: typeof capacity === 'number' ? capacity : (capacity ? Number(capacity) : undefined),
     });
     return res.status(201).json(match);
   } catch (err) {

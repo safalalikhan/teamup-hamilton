@@ -12,6 +12,7 @@ const defaultAuth = {
   login: async () => {},
   register: async () => {},
   loading: false,
+  isAdmin: false,
 };
 
 function getStoredAuth() {
@@ -95,7 +96,16 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ token, user, loading, setAuth, login, register, signOut }),
+    () => ({
+      token,
+      user,
+      loading,
+      isAdmin: Boolean(user?.role === 'admin'),
+      setAuth,
+      login,
+      register,
+      signOut,
+    }),
     [token, user, loading]
   );
 

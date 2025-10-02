@@ -67,6 +67,7 @@ router.post('/register', async (req, res) => {
       userId: user._id,
       userName: user.name,
       userEmail: user.email,
+      role: user.role,
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
@@ -81,6 +82,7 @@ router.post('/register', async (req, res) => {
         preferredPosition: user.preferredPosition,
         location: user.location,
         availability: user.availability,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -107,6 +109,7 @@ router.post('/login', async (req, res) => {
       userId: user._id,
       userName: user.name,
       userEmail: user.email,
+      role: user.role,
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
@@ -120,6 +123,7 @@ router.post('/login', async (req, res) => {
         preferredPosition: user.preferredPosition,
         location: user.location,
         availability: user.availability,
+        role: user.role,
       },
     });
   } catch (err) {

@@ -4,10 +4,10 @@ import Footer from './Footer';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-vh-100 d-flex flex-column bg-white text-dark">
+    <div className="app-shell">
       <Navbar />
-      <main className="flex-grow-1">
-        <div className="container py-4">
+      <main className="app-main">
+        <div className="container-xl px-3 px-md-4 px-xl-0">
           {children}
         </div>
       </main>

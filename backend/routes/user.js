@@ -15,7 +15,7 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.put('/', verifyToken, async (req, res) => {
   try {
-    const updates = req.body;
+    const { role, ...updates } = req.body;
     const updatedUser = await User.findByIdAndUpdate(req.user.userId, updates, {
       new: true,
     }).select('-password');

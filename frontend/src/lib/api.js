@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const lsBase = typeof window !== 'undefined' ? localStorage.getItem('apiBase') : null;
-const baseURL = (lsBase || import.meta.env.VITE_API_URL || 'http://localhost:5001').trim();
+const envBase = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.trim() : '';
+const baseURL = (lsBase || envBase || '').trim();
 
 const api = axios.create({
   baseURL,

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useCallback } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
@@ -11,15 +11,20 @@ export default function Navbar() {
     navigate('/signin');
   };
 
-  const linkClass = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
+  const { pathname } = useLocation();
+
+  const makeLinkClass = useCallback((target, exact = false) => () => {
+    const active = exact ? pathname === target : pathname.startsWith(target);
+    return `nav-link${active ? ' active' : ''}`;
+  }, [pathname]);
 
   return (
-    <header className="sticky-top bg-white border-bottom">
-      <nav className="navbar navbar-expand-md navbar-light bg-body-tertiary">
-        <div className="container">
-          <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
-            <span className="d-inline-block rounded-circle" style={{ backgroundColor: 'var(--bs-primary)', width: 8, height: 8 }} />
-            TeamUp Hamilton
+    <header className="sticky-top app-navbar">
+      <nav className="navbar navbar-expand-md navbar-light">
+        <div className="container-xl px-3 px-md-4 px-xl-0">
+          <Link to="/" className="navbar-brand">
+            <img src="/Logo.png" alt="TeamUp Hamilton" className="app-brand-logo" />
+            <span className="app-brand-word">TeamUp Hamilton</span>
           </Link>
 
           <button
@@ -35,28 +40,22 @@ export default function Navbar() {
           </button>
 
           <div className="collapse navbar-collapse" id="navbarMain">
-            <ul className="navbar-nav me-auto mb-2 mb-md-0">
-              <li className="nav-item"><NavLink to="/" end className={linkClass}>Home</NavLink></li>
-              <li className="nav-item"><NavLink to="/turfs" className={linkClass}>Turfs</NavLink></li>
-              {token && <li className="nav-item"><NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink></li>}
-              {token && <li className="nav-item"><NavLink to="/profile" className={linkClass}>Profile</NavLink></li>}
-            </ul>
+            {token && (
+              <ul className="navbar-nav me-auto mb-2 mb-md-0">
+                <li className="nav-item"><NavLink to="/dashboard" className={makeLinkClass('/dashboard')}>Dashboard</NavLink></li>
+                <li className="nav-item"><NavLink to="/turfs" className={makeLinkClass('/turfs')}>Turfs</NavLink></li>
+                <li className="nav-item"><NavLink to="/profile" className={makeLinkClass('/profile')}>Profile</NavLink></li>
+              </ul>
+            )}
 
-            <div className="d-flex align-items-center gap-2">
-              {token ? (
-                <>
-                  <span className="text-muted small text-truncate" style={{ maxWidth: '12rem' }}>
-                    {user?.name || user?.email}
-                  </span>
-                  <button onClick={handleSignOut} className="btn btn-primary btn-sm">Sign out</button>
-                </>
-              ) : (
-                <>
-                  <Link to="/signin" className="btn btn-outline-primary btn-sm">Sign in</Link>
-                  <Link to="/signup" className="btn btn-primary btn-sm">Join now</Link>
-                </>
-              )}
-            </div>
+            {token && (
+              <div className="d-flex align-items-center gap-3">
+                <div className="text-muted small text-truncate" style={{ maxWidth: '12rem' }}>
+                  {user?.name || user?.email}
+                </div>
+                <button onClick={handleSignOut} className="btn btn-outline-secondary btn-sm">Sign out</button>
+              </div>
+            )}
           </div>
         </div>
       </nav>

@@ -32,6 +32,12 @@ const userSchema = new mongoose.Schema(
       lng: Number,
     },
 
+    role: {
+      type: String,
+      enum: ['player', 'admin'],
+      default: 'player',
+    },
+
     availability: [
       {
         day: {

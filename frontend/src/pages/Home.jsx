@@ -1,16 +1,101 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
+import Card from '../components/Card';
+import Spinner from '../components/Spinner';
+import Toast from '../components/Toast';
+import api from '../lib/api';
+
+const initialEventForm = {
+  title: '',
+  description: '',
+  date: '',
+  venue: '',
+  ctaText: '',
+  ctaUrl: '',
+};
 
 export default function Home() {
-  const { token } = useAuth();
+  const { token, isAdmin } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState('');
+  const [eventForm, setEventForm] = useState(initialEventForm);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [toast, setToast] = useState({ type: '', message: '' });
+
+  useEffect(() => {
+    let timeout;
+    if (toast.message) timeout = setTimeout(() => setToast({ type: '', message: '' }), 2500);
+    return () => timeout && clearTimeout(timeout);
+  }, [toast]);
+
+  const loadEvents = useCallback(async () => {
+    setEventsLoading(true);
+    setEventsError('');
+    try {
+      const { data } = await api.get('/api/events');
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setEventsError('Unable to load upcoming trainings right now.');
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const updateEventField = (field, value) => {
+    setEventForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetEventForm = () => setEventForm(initialEventForm);
+
+  const handleCreateEvent = async (event) => {
+    event.preventDefault();
+
+    if (!eventForm.title.trim() || !eventForm.description.trim() || !eventForm.venue.trim() || !eventForm.date) {
+      setToast({ type: 'error', message: 'Please complete the title, description, venue, and date/time.' });
+      return;
+    }
+
+    const dateValue = new Date(eventForm.date);
+    if (Number.isNaN(dateValue.getTime())) {
+      setToast({ type: 'error', message: 'Please provide a valid date and time.' });
+      return;
+    }
+
+    setSavingEvent(true);
+    try {
+      await api.post('/api/events', {
+        title: eventForm.title.trim(),
+        description: eventForm.description.trim(),
+        venue: eventForm.venue.trim(),
+        date: dateValue.toISOString(),
+        ctaText: eventForm.ctaText.trim(),
+        ctaUrl: eventForm.ctaUrl.trim(),
+      });
+
+      setToast({ type: 'success', message: 'Event added for players.' });
+      resetEventForm();
+      await loadEvents();
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Failed to create event.';
+      setToast({ type: 'error', message });
+    } finally {
+      setSavingEvent(false);
+    }
+  };
 
   return (
     <Layout>
+      <Toast toast={toast} onClear={() => setToast({ type: '', message: '' })} />
       <section className="app-hero text-center">
         <div className="d-flex flex-column align-items-center gap-3">
-          <img src="/vite.svg" alt="App logo" style={{ width: 56, height: 56 }} />
+          <img src="/Logo.png" alt="TeamUp Hamilton" className="app-hero-logo" />
           <h1 className="display-5 fw-bold">TeamUp Hamilton</h1>
           <p className="lead text-muted" style={{ maxWidth: 720 }}>
             Find your perfect teammates. Plan balanced weekend football matches with smart logistics.
@@ -31,36 +116,126 @@ export default function Home() {
 
       <div className="row g-3 mt-2">
         <div className="col-12 col-lg-8">
-          <div className="card shadow-sm">
-            <div className="card-header bg-white">
-              <h2 className="h6 fw-semibold mb-0">Upcoming Trainings & Tournaments</h2>
-              <p className="small text-muted mb-0">Open to everyone in Hamilton community</p>
-            </div>
-            <div className="card-body">
-              {[
-                { id: 't1', title: 'Weekend Skills Clinic', date: 'Sat, Oct 5 · 9:00–11:00 AM', venue: 'Porritt Park 3', desc: 'Ball control, passing drills, and finishing practice. Friendly for all levels.', cta: 'Register', url: '#' },
-                { id: 't2', title: '5‑a‑side Mini Tournament', date: 'Sun, Oct 6 · 1:30–5:00 PM', venue: 'Galloway Turf 2', desc: 'Mixed teams, short games, prizes for finalists.', cta: 'Join a team', url: '#' },
-                { id: 't3', title: 'Evening Goalkeeper Workshop', date: 'Wed, Oct 9 · 6:00–7:30 PM', venue: 'Ashurst Park', desc: 'Shot‑stopping basics and distribution. Limited spots.', cta: 'Reserve spot', url: '#' },
-              ].map((x) => (
-                <div key={x.id} className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 py-2 border-bottom">
-                  <div className="me-md-3" style={{ minWidth: 220 }}>
-                    <div className="fw-semibold">{x.title}</div>
-                    <div className="text-muted small">{x.date} · {x.venue}</div>
-                  </div>
-                  <div className="flex-grow-1 text-muted small">{x.desc}</div>
-                  <div>
-                    <a href={x.url} className="btn btn-outline-primary btn-sm">{x.cta}</a>
-                  </div>
+          {isAdmin && (
+            <Card
+              title="Add training or tournament"
+              subtitle="Only admins can publish these events"
+              className="mb-3"
+            >
+              <form onSubmit={handleCreateEvent} className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label">Title</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.title}
+                    onChange={(e) => updateEventField('title', e.target.value)}
+                    placeholder="e.g., Weekend Skills Clinic"
+                  />
                 </div>
-              ))}
-              <div className="text-muted small mt-2">These are sample events for demo. Final details will be posted weekly.</div>
-            </div>
-          </div>
+                <div className="col-md-6">
+                  <label className="form-label">Venue</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.venue}
+                    onChange={(e) => updateEventField('venue', e.target.value)}
+                    placeholder="e.g., Porritt Park 3"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Date &amp; time</label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    value={eventForm.date}
+                    onChange={(e) => updateEventField('date', e.target.value)}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">CTA text</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.ctaText}
+                    onChange={(e) => updateEventField('ctaText', e.target.value)}
+                    placeholder="e.g., Register"
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label">CTA link</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.ctaUrl}
+                    onChange={(e) => updateEventField('ctaUrl', e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label">Description</label>
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    value={eventForm.description}
+                    onChange={(e) => updateEventField('description', e.target.value)}
+                    placeholder="Share what players can expect"
+                  />
+                </div>
+                <div className="col-12 d-flex gap-2">
+                  <button className="btn btn-primary" disabled={savingEvent} type="submit">
+                    {savingEvent ? 'Saving…' : 'Publish event'}
+                  </button>
+                  <button type="button" className="btn btn-outline-secondary" onClick={resetEventForm} disabled={savingEvent}>
+                    Reset
+                  </button>
+                </div>
+              </form>
+            </Card>
+          )}
+
+          <Card
+            title="Upcoming trainings & tournaments"
+            subtitle="Open to everyone in the Hamilton community"
+          >
+            {eventsLoading ? (
+              <div className="py-3 d-flex justify-content-center"><Spinner label="Loading events…" /></div>
+            ) : eventsError ? (
+              <div className="text-danger small">{eventsError}</div>
+            ) : events.length === 0 ? (
+              <div className="small text-muted">No events posted yet. Check back soon.</div>
+            ) : (
+              events.map((item) => {
+                const eventDate = item.date ? new Date(item.date) : null;
+                const formattedDate = eventDate && !Number.isNaN(eventDate.getTime())
+                  ? eventDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+                  : 'Date to be confirmed';
+
+                return (
+                  <div key={item._id} className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 py-2 border-bottom">
+                    <div className="me-md-3" style={{ minWidth: 220 }}>
+                      <div className="fw-semibold">{item.title}</div>
+                      <div className="text-muted small">{formattedDate} · {item.venue}</div>
+                    </div>
+                    <div className="flex-grow-1 text-muted small">{item.description}</div>
+                    {item.ctaText && item.ctaUrl ? (
+                      <div>
+                        <a
+                          href={item.ctaUrl}
+                          className="btn btn-outline-primary btn-sm"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          {item.ctaText}
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </Card>
         </div>
 
         <div className="col-12 col-lg-4">
           <div className="card shadow-sm mb-3">
-            <div className="card-header bg-white">
+            <div className="card-header">
               <h2 className="h6 fw-semibold mb-0">Announcements</h2>
             </div>
             <div className="card-body">

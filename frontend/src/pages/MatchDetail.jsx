@@ -84,6 +84,10 @@ export default function MatchDetail() {
   }, [match, userId]);
 
   const rsvp = async (status) => {
+    if (status === 'not_going') {
+      const ok = window.confirm('Mark as not going?');
+      if (!ok) return;
+    }
     if ((status === 'going' && joining) || (status === 'not_going' && leaving)) return;
     if (status === 'going' && isParticipant) return;
     setJoining(status === 'going');
@@ -142,7 +146,12 @@ export default function MatchDetail() {
           <div className="col-lg-6">
             <Card>
               <div>
-                <h1 className="h4 fw-semibold mb-1">{match.turf?.name || 'Match'}</h1>
+                <h1 className="h4 fw-semibold mb-1 d-flex align-items-center gap-2">
+                  <span>{match.turf?.name || 'Match'}</span>
+                  {match.status === 'Cancelled' && (
+                    <span className="badge bg-secondary">Cancelled</span>
+                  )}
+                </h1>
                 <div className="text-muted small">
                   {match.date ? new Date(match.date).toLocaleString() : 'Date TBD'}
                 </div>

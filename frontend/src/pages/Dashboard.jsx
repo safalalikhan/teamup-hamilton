@@ -67,6 +67,21 @@ export default function Dashboard() {
     api.get('/api/turfs').then((res) => setTurfs(res.data || [])).catch(() => setTurfs([]));
   }, []);
 
+  // Infinite scroll for upcoming matches
+  useEffect(() => {
+    const onScroll = () => {
+      if (!hasMore || loading || loadingMore) return;
+      const threshold = 200; // px from bottom
+      const scrolled = window.innerHeight + window.scrollY;
+      const height = document.body.offsetHeight;
+      if (scrolled >= height - threshold) {
+        loadMatches(true);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [hasMore, loading, loadingMore, cursor]);
+
   const isParticipant = useCallback((match) => {
     if (!userId) return false;
     return (match.players || []).some((p) => (p._id || p.id) === userId);
@@ -74,6 +89,10 @@ export default function Dashboard() {
 
   const rsvp = async (id, status) => {
     if (!userId) return;
+    if (status === 'not_going') {
+      const ok = window.confirm('Mark as not going?');
+      if (!ok) return;
+    }
     setPending({ id, action: status });
     try {
       await api.post(`/api/matches/${id}/rsvp`, { status });
@@ -193,13 +212,7 @@ export default function Dashboard() {
               <li className="list-group-item text-muted small">No upcoming matches. Create one above.</li>
             )}
           </ul>
-          {hasMore && (
-            <div className="p-2 text-center">
-              <button className="btn btn-outline-secondary btn-sm" onClick={() => loadMatches(true)} disabled={loadingMore}>
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </button>
-            </div>
-          )}
+          {/* Infinite scroll replaces the manual load button */}
         </Card>
 
         {/* Past matches section */}

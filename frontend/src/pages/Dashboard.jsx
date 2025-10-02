@@ -15,23 +15,50 @@ export default function Dashboard() {
   const [form, setForm] = useState({ date: '', time: '', turf: '', capacity: '' });
   const [turfs, setTurfs] = useState([]);
   const [pending, setPending] = useState({ id: null, action: null });
+  const [cursor, setCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { user } = useAuth();
 
   const userId = useMemo(() => user?._id || user?.id || null, [user]);
 
-  const loadMatches = async () => {
-    setLoading(true);
+  const LIMIT = 20;
+
+  const loadMatches = async (append = false) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     setError('');
     try {
-      const res = await api.get('/api/matches');
+      const params = new URLSearchParams();
+      params.set('limit', String(LIMIT));
+      if (append && cursor) params.set('cursor', cursor);
+      const res = await api.get(`/api/matches?${params.toString()}`);
       const list = Array.isArray(res.data) ? res.data : [];
       const now = Date.now();
-      setMatches(list.filter((m) => new Date(m.date).getTime() >= now));
-      setPastMatches(list.filter((m) => new Date(m.date).getTime() < now));
+      if (append) {
+        const upAdd = list.filter((m) => new Date(m.date).getTime() >= now);
+        const pastAdd = list.filter((m) => new Date(m.date).getTime() < now);
+        const byId = (arr) => {
+          const seen = new Set();
+          const out = [];
+          for (const it of arr) { const id = it._id || it.id; if (!seen.has(id)) { seen.add(id); out.push(it); } }
+          return out;
+        };
+        setMatches((prev) => byId([...prev, ...upAdd]));
+        setPastMatches((prev) => byId([...prev, ...pastAdd]));
+      } else {
+        setMatches(list.filter((m) => new Date(m.date).getTime() >= now));
+        setPastMatches(list.filter((m) => new Date(m.date).getTime() < now));
+      }
+      // Update cursor and hasMore based on page
+      if (list.length > 0) {
+        const last = list[list.length - 1];
+        if (last?.date) setCursor(new Date(last.date).toISOString());
+      }
+      setHasMore(list.length === LIMIT);
     } catch (e) {
       setError('Failed to load matches');
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false); else setLoading(false);
     }
   };
 
@@ -135,9 +162,9 @@ export default function Dashboard() {
                       <button
                         onClick={() => rsvp(m._id, 'going')}
                         className={`btn btn-primary btn-sm ${joined ? '' : 'btn-outline-primary'}`}
-                        disabled={!userId || (isPending && pending.action === 'going') || joined}
-                        aria-disabled={!userId || joined}
-                        title={!userId ? 'Sign in to RSVP' : joined ? 'You are going' : 'RSVP Going'}
+                        disabled={!userId || (isPending && pending.action === 'going') || joined || spotsLeft === 0}
+                        aria-disabled={!userId || joined || spotsLeft === 0}
+                        title={!userId ? 'Sign in to RSVP' : joined ? 'You are going' : spotsLeft === 0 ? 'Match is full' : 'RSVP Going'}
                       >{isPending && pending.action === 'going' ? '...' : 'Going'}</button>
                       <button
                         onClick={() => rsvp(m._id, 'maybe')}
@@ -155,6 +182,10 @@ export default function Dashboard() {
                       >{isPending && pending.action === 'not_going' ? '...' : 'Not going'}</button>
                     </div>
                   </div>
+                  <div className="ms-2 d-flex align-items-center gap-2">
+                    {spotsLeft === 0 && <span className="badge bg-danger">FULL</span>}
+                    {m.status === 'Cancelled' && <span className="badge bg-secondary">Cancelled</span>}
+                  </div>
                 </li>
               );
             })}
@@ -162,6 +193,13 @@ export default function Dashboard() {
               <li className="list-group-item text-muted small">No upcoming matches. Create one above.</li>
             )}
           </ul>
+          {hasMore && (
+            <div className="p-2 text-center">
+              <button className="btn btn-outline-secondary btn-sm" onClick={() => loadMatches(true)} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          )}
         </Card>
 
         {/* Past matches section */}

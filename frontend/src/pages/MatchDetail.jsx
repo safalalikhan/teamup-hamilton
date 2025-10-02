@@ -76,6 +76,7 @@ export default function MatchDetail() {
   const userId = user?._id || user?.id;
   const isPast = match?.date ? new Date(match.date).getTime() < Date.now() : false;
   const canEditCapacity = Boolean(user?.role === 'admin' || (match?.createdBy && String(match.createdBy) === String(userId)));
+  const canCancel = canEditCapacity;
 
   const isParticipant = useMemo(() => {
     if (!match?.players || !userId) return false;
@@ -168,6 +169,23 @@ export default function MatchDetail() {
                       <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={saveCapacity}>{capSaving ? 'Saving…' : 'Save'}</button>
                       <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={() => setCapEdit('')}>Reset</button>
                     </div>
+                  )}
+                  {canCancel && match?.status !== 'Cancelled' && !isPast && (
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={async () => {
+                        if (!confirm('Cancel this match? This cannot be undone.')) return;
+                        try {
+                          const { data } = await api.patch(`/api/matches/${id}/status`, { status: 'Cancelled' });
+                          setMatch(data);
+                          setToast({ type: 'success', message: 'Match cancelled' });
+                        } catch {
+                          setToast({ type: 'error', message: 'Failed to cancel match' });
+                        }
+                      }}
+                    >
+                      Cancel match
+                    </button>
                   )}
                   <div className="btn-group btn-group-sm" role="group" aria-label="View segment">
                     <button className={`btn ${segment === 'upcoming' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('upcoming')}>

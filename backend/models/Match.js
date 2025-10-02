@@ -38,5 +38,6 @@ const matchSchema = new mongoose.Schema(
 // Helpful indexes
 matchSchema.index({ date: 1 });
 matchSchema.index({ status: 1, date: 1 });
+matchSchema.index({ createdBy: 1, date: 1 });
 
 module.exports = mongoose.model('Match', matchSchema);

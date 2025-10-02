@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
+import Spinner from '../components/Spinner';
 import Card from '../components/Card';
 import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
@@ -155,6 +156,7 @@ export default function Dashboard() {
 
         <Card title="Upcoming Matches" subtitle="Join an open game or create one above.">
           {error && <div className="text-danger small mb-2">{error}</div>}
+          {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
           <ul className="list-group list-group-flush">
             {matches.map((m) => {
               const joined = isParticipant(m);

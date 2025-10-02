@@ -35,12 +35,19 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
+    const message = err?.response?.data?.message || err?.message || 'Request failed';
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:toast', { detail: { type: 'error', message } }));
+    }
     if (status === 401 || status === 403) {
       try {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       } catch {}
       if (typeof window !== 'undefined') window.location.href = '/signin';
+    }
+    if (status >= 500) {
+      // keep user on page but show toast; already dispatched above
     }
     return Promise.reject(err);
   }

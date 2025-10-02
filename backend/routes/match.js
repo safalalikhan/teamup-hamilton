@@ -1,6 +1,7 @@
 const express = require('express');
 const Match = require('../models/Match');
 const verifyToken = require('../middleware/verifyToken');
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
@@ -140,7 +141,8 @@ router.patch('/:id', verifyToken, async (req, res) => {
 });
 
 // RSVP endpoint: { status: 'going' | 'maybe' | 'not_going' }
-router.post('/:id/rsvp', verifyToken, async (req, res) => {
+const rsvpLimiter = rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false });
+router.post('/:id/rsvp', rsvpLimiter, verifyToken, async (req, res) => {
   try {
     const match = await Match.findById(req.params.id);
     if (!match) return res.status(404).json({ message: 'Match not found' });

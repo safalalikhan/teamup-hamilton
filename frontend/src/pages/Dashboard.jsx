@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const [matches, setMatches] = useState([]);
+  const [pastMatches, setPastMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
@@ -23,7 +24,10 @@ export default function Dashboard() {
     setError('');
     try {
       const res = await api.get('/api/matches');
-      setMatches(res.data || []);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const now = Date.now();
+      setMatches(list.filter((m) => new Date(m.date).getTime() >= now));
+      setPastMatches(list.filter((m) => new Date(m.date).getTime() < now));
     } catch (e) {
       setError('Failed to load matches');
     } finally {
@@ -41,22 +45,11 @@ export default function Dashboard() {
     return (match.players || []).some((p) => (p._id || p.id) === userId);
   }, [userId]);
 
-  const join = async (id) => {
+  const rsvp = async (id, status) => {
     if (!userId) return;
-    setPending({ id, action: 'join' });
+    setPending({ id, action: status });
     try {
-      await api.post(`/api/matches/${id}/join`);
-      await loadMatches();
-    } finally {
-      setPending({ id: null, action: null });
-    }
-  };
-
-  const leave = async (id) => {
-    if (!userId) return;
-    setPending({ id, action: 'leave' });
-    try {
-      await api.post(`/api/matches/${id}/leave`);
+      await api.post(`/api/matches/${id}/rsvp`, { status });
       await loadMatches();
     } finally {
       setPending({ id: null, action: null });
@@ -110,38 +103,69 @@ export default function Dashboard() {
             {matches.map((m) => {
               const joined = isParticipant(m);
               const isPending = pending.id === m._id;
-
+              const isToday = !!m.isToday;
+              const spotsLeft = m.spotsLeft ?? null;
               return (
-                <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
+                <li key={m._id} className={`list-group-item d-flex align-items-center justify-content-between ${isToday ? 'match-today' : ''}`}>
                   <div>
-                    <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
-                    <div className="small text-muted">Players: {m.players?.length || 0}</div>
+                    <div className="fw-semibold d-flex align-items-center gap-2">
+                      <span>{new Date(m.date).toLocaleString()}</span>
+                      {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
+                    </div>
+                    <div className="small text-muted">Players: {m.players?.length || 0}{spotsLeft != null && ` · Spots left: ${spotsLeft}`}</div>
                   </div>
-                  <div className="d-flex gap-2">
-                    <Link to={`/matches/${m._id}`} className="btn btn-primary btn-sm">View</Link>
-                    <button
-                      onClick={() => join(m._id)}
-                      className="btn btn-primary btn-sm"
-                      disabled={!userId || joined || (isPending && pending.action === 'join')}
-                    >
-                      {isPending && pending.action === 'join' ? 'Joining…' : 'Join'}
-                    </button>
-                    <button
-                      onClick={() => leave(m._id)}
-                      className="btn btn-outline-secondary btn-sm"
-                      disabled={!userId || !joined || (isPending && pending.action === 'leave')}
-                    >
-                      {isPending && pending.action === 'leave' ? 'Leaving…' : 'Leave'}
-                    </button>
+                  <div className="d-flex gap-1">
+                    <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm">View</Link>
+                    <div className="btn-group btn-group-sm" role="group" aria-label="RSVP">
+                      <button
+                        onClick={() => rsvp(m._id, 'going')}
+                        className={`btn btn-primary btn-sm ${joined ? '' : 'btn-outline-primary'}`}
+                        disabled={!userId || (isPending && pending.action === 'going')}
+                        title={joined ? 'You are going' : 'RSVP Going'}
+                      >{isPending && pending.action === 'going' ? '...' : 'Going'}</button>
+                      <button
+                        onClick={() => rsvp(m._id, 'maybe')}
+                        className="btn btn-outline-secondary btn-sm"
+                        disabled={!userId || (isPending && pending.action === 'maybe')}
+                        title="RSVP Maybe"
+                      >{isPending && pending.action === 'maybe' ? '...' : 'Maybe'}</button>
+                      <button
+                        onClick={() => rsvp(m._id, 'not_going')}
+                        className="btn btn-outline-secondary btn-sm"
+                        disabled={!userId || (isPending && pending.action === 'not_going')}
+                        title="RSVP Not going"
+                      >{isPending && pending.action === 'not_going' ? '...' : 'Not going'}</button>
+                    </div>
                   </div>
                 </li>
               );
             })}
             {!loading && matches.length === 0 && (
-              <li className="list-group-item text-muted small">No matches yet. Create one above.</li>
+              <li className="list-group-item text-muted small">No upcoming matches. Create one above.</li>
             )}
           </ul>
         </Card>
+
+        {/* Past matches section */}
+        <Card title="Past Matches" subtitle="Completed or older matches are archived here.">
+          <details>
+            <summary className="small text-muted">Show past matches ({pastMatches.length})</summary>
+            <ul className="list-group list-group-flush mt-2">
+              {pastMatches.map((m) => (
+                <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
+                  <div>
+                    <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                    <div className="small text-muted">Players: {m.players?.length || 0}</div>
+                  </div>
+                  <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm">View</Link>
+                </li>
+              ))}
+              {!loading && pastMatches.length === 0 && (
+                <li className="list-group-item text-muted small">No past matches.</li>
+              )}
+            </ul>
+          </details>
+          </Card>
     </Layout>
   );
 }

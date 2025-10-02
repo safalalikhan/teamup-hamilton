@@ -18,6 +18,7 @@ const initialEventForm = {
 
 export default function Home() {
   const { token, isAdmin } = useAuth();
+  const [ann, setAnn] = useState([]);
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState('');
@@ -46,6 +47,10 @@ export default function Home() {
 
   useEffect(() => {
     loadEvents();
+    // Load announcements of upcoming matches (next 24h)
+    api.get('/api/matches/announcements/upcoming?windowHours=24')
+      .then((res) => setAnn(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setAnn([]));
   }, [loadEvents]);
 
   const updateEventField = (field, value) => {
@@ -240,19 +245,24 @@ export default function Home() {
             </div>
             <div className="card-body">
               <ul className="list-unstyled mb-0">
-                {[ 
-                  { id: 'a1', title: 'New turf added: Clyde Park', when: 'Oct 1' },
-                  { id: 'a2', title: 'Looking for defenders for Sunday 4 PM match', when: 'Oct 2' },
-                  { id: 'a3', title: 'Light rain expected this weekend — check turf updates', when: 'Oct 3' },
-                ].map(a => (
-                  <li key={a.id} className="mb-2 d-flex align-items-start gap-2">
-                    <span className="badge text-bg-primary rounded-pill mt-1" style={{ width: 8, height: 8 }} />
-                    <div>
-                      <div className="small">{a.title}</div>
-                      <div className="text-muted small">{a.when}</div>
-                    </div>
-                  </li>
-                ))}
+                {ann.length === 0 ? (
+                  <li className="small text-muted">No upcoming match announcements.</li>
+                ) : (
+                  ann.map((m) => (
+                    <li key={m._id} className="mb-2 d-flex align-items-start gap-2">
+                      <span className="badge text-bg-primary rounded-pill mt-1" style={{ width: 8, height: 8 }} />
+                      <div>
+                        <div className="small">
+                          {new Date(m.date).toLocaleString()} — {m.turf?.name || 'Open match'}
+                          {m.spotsLeft != null ? ` · ${m.spotsLeft} spots left` : ''}
+                        </div>
+                        {m.startsInMinutes != null && (
+                          <div className="text-muted small">Starts in {Math.max(0, m.startsInMinutes)} min</div>
+                        )}
+                      </div>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           </div>

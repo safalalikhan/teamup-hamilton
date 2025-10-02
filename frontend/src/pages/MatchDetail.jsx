@@ -77,30 +77,19 @@ export default function MatchDetail() {
     return match.players.some((p) => p._id === userId || p.id === userId);
   }, [match, userId]);
 
-  const join = async () => {
-    if (joining || isParticipant) return;
-    setJoining(true);
+  const rsvp = async (status) => {
+    if ((status === 'going' && joining) || (status === 'not_going' && leaving)) return;
+    if (status === 'going' && isParticipant) return;
+    setJoining(status === 'going');
+    setLeaving(status === 'not_going');
     try {
-      await api.post(`/api/matches/${id}/join`);
-      setToast({ type: 'success', message: 'Joined match' });
+      await api.post(`/api/matches/${id}/rsvp`, { status });
+      setToast({ type: 'success', message: status === 'not_going' ? 'Updated RSVP' : 'RSVP saved' });
       await load();
     } catch {
-      setToast({ type: 'error', message: 'Failed to join' });
+      setToast({ type: 'error', message: 'Failed to update RSVP' });
     } finally {
       setJoining(false);
-    }
-  };
-
-  const leave = async () => {
-    if (leaving || !isParticipant) return;
-    setLeaving(true);
-    try {
-      await api.post(`/api/matches/${id}/leave`);
-      setToast({ type: 'success', message: 'Left match' });
-      await load();
-    } catch {
-      setToast({ type: 'error', message: 'Failed to leave' });
-    } finally {
       setLeaving(false);
     }
   };
@@ -142,20 +131,11 @@ export default function MatchDetail() {
                 )}
 
                 <div className="mt-3 d-flex flex-wrap gap-2">
-                  <button
-                    onClick={join}
-                    className="btn btn-primary"
-                    disabled={!userId || joining || isParticipant}
-                  >
-                    {joining ? 'Joining...' : 'Join'}
-                  </button>
-                  <button
-                    onClick={leave}
-                    className="btn btn-outline-secondary"
-                    disabled={!userId || leaving || !isParticipant}
-                  >
-                    {leaving ? 'Leaving...' : 'Leave'}
-                  </button>
+                  <div className="btn-group">
+                    <button onClick={() => rsvp('going')} className="btn btn-primary" disabled={!userId || joining || isParticipant}>{joining ? '...' : 'Going'}</button>
+                    <button onClick={() => rsvp('maybe')} className="btn btn-outline-secondary" disabled={!userId}>Maybe</button>
+                    <button onClick={() => rsvp('not_going')} className="btn btn-outline-secondary" disabled={!userId || leaving}>{leaving ? '...' : 'Not going'}</button>
+                  </div>
                 </div>
 
                 {match.turf?.location?.lat && match.turf?.location?.lng && (

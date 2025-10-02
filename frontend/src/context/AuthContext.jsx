@@ -31,6 +31,28 @@ function getStoredAuth() {
 export function AuthProvider({ children }) {
   const [{ token, user }, setAuth] = useState(getStoredAuth());
   const [loading, setLoading] = useState(true);
+  const IDLE_MAX_MS = 30 * 60 * 1000; // 30 minutes
+  const [lastActive, setLastActive] = useState(Date.now());
+  useEffect(() => {
+    const bump = () => setLastActive(Date.now());
+    const evts = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll', 'visibilitychange'];
+    evts.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    const t = setInterval(() => {
+      if (!token) return;
+      if (Date.now() - lastActive > IDLE_MAX_MS) {
+        // force sign-out on idle timeout
+        try {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        } catch {}
+        setAuth({ token: null, user: null });
+      }
+    }, 30000);
+    return () => {
+      evts.forEach((e) => window.removeEventListener(e, bump));
+      clearInterval(t);
+    };
+  }, [token, lastActive]);
 
   // Bootstrap from /me if a token exists
   useEffect(() => {

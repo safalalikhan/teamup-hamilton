@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
 import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const [matches, setMatches] = useState([]);
@@ -12,6 +13,10 @@ export default function Dashboard() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ date: '', time: '', turf: '' });
   const [turfs, setTurfs] = useState([]);
+  const [pending, setPending] = useState({ id: null, action: null });
+  const { user } = useAuth();
+
+  const userId = useMemo(() => user?._id || user?.id || null, [user]);
 
   const loadMatches = async () => {
     setLoading(true);
@@ -31,14 +36,31 @@ export default function Dashboard() {
     api.get('/api/turfs').then((res) => setTurfs(res.data || [])).catch(() => setTurfs([]));
   }, []);
 
+  const isParticipant = useCallback((match) => {
+    if (!userId) return false;
+    return (match.players || []).some((p) => (p._id || p.id) === userId);
+  }, [userId]);
+
   const join = async (id) => {
-    await api.post(`/api/matches/${id}/join`);
-    await loadMatches();
+    if (!userId) return;
+    setPending({ id, action: 'join' });
+    try {
+      await api.post(`/api/matches/${id}/join`);
+      await loadMatches();
+    } finally {
+      setPending({ id: null, action: null });
+    }
   };
 
   const leave = async (id) => {
-    await api.post(`/api/matches/${id}/leave`);
-    await loadMatches();
+    if (!userId) return;
+    setPending({ id, action: 'leave' });
+    try {
+      await api.post(`/api/matches/${id}/leave`);
+      await loadMatches();
+    } finally {
+      setPending({ id: null, action: null });
+    }
   };
 
   const create = async (e) => {
@@ -85,19 +107,36 @@ export default function Dashboard() {
         <Card title="Upcoming Matches" subtitle="Join an open game or create one above.">
           {error && <div className="text-danger small mb-2">{error}</div>}
           <ul className="list-group list-group-flush">
-            {matches.map((m) => (
-              <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
-                <div>
-                  <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
-                  <div className="small text-muted">Players: {m.players?.length || 0}</div>
-                </div>
-                <div className="d-flex gap-2">
-                  <Link to={`/matches/${m._id}`} className="btn btn-primary btn-sm">View</Link>
-                  <button onClick={() => join(m._id)} className="btn btn-primary btn-sm">Join</button>
-                  <button onClick={() => leave(m._id)} className="btn btn-outline-secondary btn-sm">Leave</button>
-                </div>
-              </li>
-            ))}
+            {matches.map((m) => {
+              const joined = isParticipant(m);
+              const isPending = pending.id === m._id;
+
+              return (
+                <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
+                  <div>
+                    <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                    <div className="small text-muted">Players: {m.players?.length || 0}</div>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <Link to={`/matches/${m._id}`} className="btn btn-primary btn-sm">View</Link>
+                    <button
+                      onClick={() => join(m._id)}
+                      className="btn btn-primary btn-sm"
+                      disabled={!userId || joined || (isPending && pending.action === 'join')}
+                    >
+                      {isPending && pending.action === 'join' ? 'Joining…' : 'Join'}
+                    </button>
+                    <button
+                      onClick={() => leave(m._id)}
+                      className="btn btn-outline-secondary btn-sm"
+                      disabled={!userId || !joined || (isPending && pending.action === 'leave')}
+                    >
+                      {isPending && pending.action === 'leave' ? 'Leaving…' : 'Leave'}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
             {!loading && matches.length === 0 && (
               <li className="list-group-item text-muted small">No matches yet. Create one above.</li>
             )}

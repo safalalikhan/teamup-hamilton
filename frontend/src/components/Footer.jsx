@@ -1,21 +1,27 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Footer() {
+  const { token } = useAuth();
+
   return (
-    <footer className="border-top bg-white">
-      <div className="container py-3 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 text-dark">
-        <div className="d-flex align-items-center gap-2">
-          <span className="d-inline-block rounded-circle" style={{ backgroundColor: 'var(--bs-primary)', width: 8, height: 8 }} />
-          <span className="fw-semibold">TeamUp Hamilton</span>
+    <footer className="app-footer mt-auto">
+      <div className="container-xl px-3 px-md-4 px-xl-0 app-footer__inner">
+        <div className="app-footer__brand">
+          <img src="/Logo.png" alt="TeamUp Hamilton" className="app-brand-logo" />
+          <span>TeamUp Hamilton</span>
         </div>
-        <nav className="d-flex align-items-center gap-3 small">
-          <Link to="/" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Home</Link>
-          <Link to="/dashboard" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Dashboard</Link>
-          <Link to="/turfs" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Turfs</Link>
-          <Link to="/profile" className="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Profile</Link>
-        </nav>
-        <div className="text-muted small">© {new Date().getFullYear()} TeamUp Hamilton</div>
+
+        {token && (
+          <nav className="app-footer__nav">
+            <Link to="/dashboard">Dashboard</Link>
+            <Link to="/turfs">Turfs</Link>
+            <Link to="/profile">Profile</Link>
+          </nav>
+        )}
+
+        <div className="text-muted small">© {new Date().getFullYear()} TeamUp Hamilton. All rights reserved.</div>
       </div>
     </footer>
   );

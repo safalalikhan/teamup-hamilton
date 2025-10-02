@@ -10,11 +10,13 @@ export default function Toast({ toast, onClear, duration = 2500 }) {
   if (!toast?.message) return null;
 
   const ok = toast.type === 'success';
-  const klass = ok ? 'alert alert-success' : 'alert alert-danger';
+  const tone = ok ? 'app-toast__inner--success' : 'app-toast__inner--error';
+  const icon = ok ? 'OK' : '!';
 
   return (
-    <div role="status" aria-live="polite" className="position-fixed top-0 end-0 m-3" style={{ zIndex: 1050, maxWidth: '24rem' }}>
-      <div className={klass}>
+    <div role="status" aria-live="polite" className="app-toast">
+      <div className={`app-toast__inner ${tone}`}>
+        <span aria-hidden="true" className="app-toast__icon">{icon}</span>
         <p className="mb-0 small">{toast.message}</p>
       </div>
     </div>

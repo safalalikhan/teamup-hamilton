@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
 import Toast from '../components/Toast';
 import Spinner from '../components/Spinner';
+import { useAuth } from '../context/AuthContext';
 
 function MapView({ lat, lng, height = 240 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -44,6 +45,9 @@ export default function MatchDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState({ type: '', message: '' });
+  const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     let t;
@@ -66,23 +70,38 @@ export default function MatchDetail() {
 
   useEffect(() => { load(); }, [id]);
 
+  const userId = user?._id || user?.id;
+
+  const isParticipant = useMemo(() => {
+    if (!match?.players || !userId) return false;
+    return match.players.some((p) => p._id === userId || p.id === userId);
+  }, [match, userId]);
+
   const join = async () => {
+    if (joining || isParticipant) return;
+    setJoining(true);
     try {
       await api.post(`/api/matches/${id}/join`);
       setToast({ type: 'success', message: 'Joined match' });
       await load();
     } catch {
       setToast({ type: 'error', message: 'Failed to join' });
+    } finally {
+      setJoining(false);
     }
   };
 
   const leave = async () => {
+    if (leaving || !isParticipant) return;
+    setLeaving(true);
     try {
       await api.post(`/api/matches/${id}/leave`);
       setToast({ type: 'success', message: 'Left match' });
       await load();
     } catch {
       setToast({ type: 'error', message: 'Failed to leave' });
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -123,8 +142,20 @@ export default function MatchDetail() {
                 )}
 
                 <div className="mt-3 d-flex flex-wrap gap-2">
-                  <button onClick={join} className="btn btn-primary">Join</button>
-                  <button onClick={leave} className="btn btn-outline-secondary">Leave</button>
+                  <button
+                    onClick={join}
+                    className="btn btn-primary"
+                    disabled={!userId || joining || isParticipant}
+                  >
+                    {joining ? 'Joining...' : 'Join'}
+                  </button>
+                  <button
+                    onClick={leave}
+                    className="btn btn-outline-secondary"
+                    disabled={!userId || leaving || !isParticipant}
+                  >
+                    {leaving ? 'Leaving...' : 'Leave'}
+                  </button>
                 </div>
 
                 {match.turf?.location?.lat && match.turf?.location?.lng && (

@@ -51,11 +51,13 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const turfRoutes = require('./routes/turf');
 const matchRoutes = require('./routes/match');
+const eventRoutes = require('./routes/event');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/turfs', turfRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/events', eventRoutes);
 
 // Health
 app.get('/', (_req, res) => res.send('API is working'));

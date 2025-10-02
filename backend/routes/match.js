@@ -19,12 +19,20 @@ function computeDerived(m) {
   return { isPast, isToday, startsInMinutes, goingCount, maybeCount, notGoingCount, spotsLeft };
 }
 
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const matches = await Match.find({})
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const query = {};
+    // Basic cursor by date; pass ?cursor=ISO to fetch after that date
+    if (req.query.cursor) {
+      const c = new Date(String(req.query.cursor));
+      if (!Number.isNaN(c.getTime())) query.date = { $gt: c };
+    }
+    const matches = await Match.find(query)
       .populate('turf')
       .populate('players', 'name email')
-      .sort({ date: 1, createdAt: -1 });
+      .sort({ date: 1, createdAt: -1 })
+      .limit(limit);
 
     const updates = [];
     const out = matches.map((m) => {
@@ -58,12 +66,40 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Status change (owner or admin). Allow setting to Cancelled; allow Completed if past.
+router.patch('/:id/status', verifyToken, async (req, res) => {
+  try {
+    const match = await Match.findById(req.params.id);
+    if (!match) return res.status(404).json({ message: 'Match not found' });
+    const isOwner = String(match.createdBy || '') === String(req.user.userId || '');
+    const isAdmin = String(req.user.role || '') === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Forbidden' });
+    const next = String(req.body.status || '');
+    if (!['Cancelled', 'Completed', 'Scheduled'].includes(next)) return res.status(400).json({ message: 'Invalid status' });
+    if (next === 'Completed' && match.date && new Date(match.date) > new Date() && !isAdmin) {
+      return res.status(400).json({ message: 'Cannot complete a future match' });
+    }
+    match.status = next;
+    await match.save();
+    const obj = match.toObject({ virtuals: true });
+    Object.assign(obj, computeDerived(obj));
+    return res.json(obj);
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { date, time, turf, capacity } = req.body;
     if (!date) return res.status(400).json({ message: 'date is required' });
+    // Coerce to Date and validate minimum lead time (30 minutes)
+    const start = new Date(date);
+    if (Number.isNaN(start.getTime())) return res.status(400).json({ message: 'Invalid date' });
+    const minLead = new Date(Date.now() + 30 * 60 * 1000);
+    if (start < minLead) return res.status(400).json({ message: 'Match must be scheduled at least 30 minutes in advance' });
     const match = await Match.create({
-      date,
+      date: start.toISOString(),
       time,
       turf,
       createdBy: req.user.userId,

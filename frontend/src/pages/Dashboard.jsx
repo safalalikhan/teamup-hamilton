@@ -135,20 +135,23 @@ export default function Dashboard() {
                       <button
                         onClick={() => rsvp(m._id, 'going')}
                         className={`btn btn-primary btn-sm ${joined ? '' : 'btn-outline-primary'}`}
-                        disabled={!userId || (isPending && pending.action === 'going')}
-                        title={joined ? 'You are going' : 'RSVP Going'}
+                        disabled={!userId || (isPending && pending.action === 'going') || joined}
+                        aria-disabled={!userId || joined}
+                        title={!userId ? 'Sign in to RSVP' : joined ? 'You are going' : 'RSVP Going'}
                       >{isPending && pending.action === 'going' ? '...' : 'Going'}</button>
                       <button
                         onClick={() => rsvp(m._id, 'maybe')}
                         className="btn btn-outline-secondary btn-sm"
                         disabled={!userId || (isPending && pending.action === 'maybe')}
-                        title="RSVP Maybe"
+                        aria-disabled={!userId}
+                        title={!userId ? 'Sign in to RSVP' : 'RSVP Maybe'}
                       >{isPending && pending.action === 'maybe' ? '...' : 'Maybe'}</button>
                       <button
                         onClick={() => rsvp(m._id, 'not_going')}
                         className="btn btn-outline-secondary btn-sm"
                         disabled={!userId || (isPending && pending.action === 'not_going')}
-                        title="RSVP Not going"
+                        aria-disabled={!userId}
+                        title={!userId ? 'Sign in to RSVP' : 'RSVP Not going'}
                       >{isPending && pending.action === 'not_going' ? '...' : 'Not going'}</button>
                     </div>
                   </div>

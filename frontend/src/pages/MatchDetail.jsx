@@ -47,6 +47,9 @@ export default function MatchDetail() {
   const [toast, setToast] = useState({ type: '', message: '' });
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [segment, setSegment] = useState('upcoming');
+  const [capEdit, setCapEdit] = useState('');
+  const [capSaving, setCapSaving] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -71,37 +74,50 @@ export default function MatchDetail() {
   useEffect(() => { load(); }, [id]);
 
   const userId = user?._id || user?.id;
+  const isPast = match?.date ? new Date(match.date).getTime() < Date.now() : false;
+  const canEditCapacity = Boolean(user?.role === 'admin' || (match?.createdBy && String(match.createdBy) === String(userId)));
+  const canCancel = canEditCapacity;
 
   const isParticipant = useMemo(() => {
     if (!match?.players || !userId) return false;
     return match.players.some((p) => p._id === userId || p.id === userId);
   }, [match, userId]);
 
-  const join = async () => {
-    if (joining || isParticipant) return;
-    setJoining(true);
+  const rsvp = async (status) => {
+    if (status === 'not_going') {
+      const ok = window.confirm('Mark as not going?');
+      if (!ok) return;
+    }
+    if ((status === 'going' && joining) || (status === 'not_going' && leaving)) return;
+    if (status === 'going' && isParticipant) return;
+    setJoining(status === 'going');
+    setLeaving(status === 'not_going');
     try {
-      await api.post(`/api/matches/${id}/join`);
-      setToast({ type: 'success', message: 'Joined match' });
+      await api.post(`/api/matches/${id}/rsvp`, { status });
+      setToast({ type: 'success', message: status === 'not_going' ? 'Updated RSVP' : 'RSVP saved' });
       await load();
-    } catch {
-      setToast({ type: 'error', message: 'Failed to join' });
+    } catch (e) {
+      const msg = e?.response?.status === 409 ? 'Match is full' : 'Failed to update RSVP';
+      setToast({ type: 'error', message: msg });
     } finally {
       setJoining(false);
+      setLeaving(false);
     }
   };
 
-  const leave = async () => {
-    if (leaving || !isParticipant) return;
-    setLeaving(true);
+  const saveCapacity = async () => {
+    if (!canEditCapacity) return;
+    setCapSaving(true);
     try {
-      await api.post(`/api/matches/${id}/leave`);
-      setToast({ type: 'success', message: 'Left match' });
-      await load();
-    } catch {
-      setToast({ type: 'error', message: 'Failed to leave' });
+      const capNum = Number(capEdit);
+      const payload = { capacity: Number.isFinite(capNum) && capNum > 0 ? capNum : 0 };
+      const { data } = await api.patch(`/api/matches/${id}`, payload);
+      setMatch(data);
+      setToast({ type: 'success', message: 'Capacity updated' });
+    } catch (e) {
+      setToast({ type: 'error', message: 'Failed to update capacity' });
     } finally {
-      setLeaving(false);
+      setCapSaving(false);
     }
   };
 
@@ -130,7 +146,12 @@ export default function MatchDetail() {
           <div className="col-lg-6">
             <Card>
               <div>
-                <h1 className="h4 fw-semibold mb-1">{match.turf?.name || 'Match'}</h1>
+                <h1 className="h4 fw-semibold mb-1 d-flex align-items-center gap-2">
+                  <span>{match.turf?.name || 'Match'}</span>
+                  {match.status === 'Cancelled' && (
+                    <span className="badge bg-secondary">Cancelled</span>
+                  )}
+                </h1>
                 <div className="text-muted small">
                   {match.date ? new Date(match.date).toLocaleString() : 'Date TBD'}
                 </div>
@@ -141,22 +162,60 @@ export default function MatchDetail() {
                   </div>
                 )}
 
-                <div className="mt-3 d-flex flex-wrap gap-2">
-                  <button
-                    onClick={join}
-                    className="btn btn-primary"
-                    disabled={!userId || joining || isParticipant}
-                  >
-                    {joining ? 'Joining...' : 'Join'}
-                  </button>
-                  <button
-                    onClick={leave}
-                    className="btn btn-outline-secondary"
-                    disabled={!userId || leaving || !isParticipant}
-                  >
-                    {leaving ? 'Leaving...' : 'Leave'}
-                  </button>
+                <div className="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                  {canEditCapacity && (
+                    <div className="d-flex align-items-center gap-2 me-3">
+                      <label className="form-label mb-0 small">Capacity</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-control form-control-sm"
+                        style={{ width: 120 }}
+                        value={capEdit}
+                        onChange={(e) => setCapEdit(e.target.value)}
+                        placeholder={match.capacity ? String(match.capacity) : 'No limit'}
+                      />
+                      <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={saveCapacity}>{capSaving ? 'Saving…' : 'Save'}</button>
+                      <button className="btn btn-outline-secondary btn-sm" disabled={capSaving} onClick={() => setCapEdit('')}>Reset</button>
+                    </div>
+                  )}
+                  {canCancel && match?.status !== 'Cancelled' && !isPast && (
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={async () => {
+                        if (!confirm('Cancel this match? This cannot be undone.')) return;
+                        try {
+                          const { data } = await api.patch(`/api/matches/${id}/status`, { status: 'Cancelled' });
+                          setMatch(data);
+                          setToast({ type: 'success', message: 'Match cancelled' });
+                        } catch {
+                          setToast({ type: 'error', message: 'Failed to cancel match' });
+                        }
+                      }}
+                    >
+                      Cancel match
+                    </button>
+                  )}
+                  <div className="btn-group btn-group-sm" role="group" aria-label="View segment">
+                    <button className={`btn ${segment === 'upcoming' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('upcoming')}>
+                      Upcoming
+                    </button>
+                    <button className={`btn ${segment === 'past' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setSegment('past')}>
+                      Past
+                    </button>
+                  </div>
+                  {isPast && <span className="badge bg-secondary">Completed</span>}
                 </div>
+
+                {segment === 'upcoming' && !isPast && (
+                  <div className="mt-2 d-flex flex-wrap gap-2">
+                    <div className="btn-group">
+                      <button onClick={() => rsvp('going')} className="btn btn-primary" disabled={!userId || joining || isParticipant}>{joining ? '...' : 'Going'}</button>
+                      <button onClick={() => rsvp('maybe')} className="btn btn-outline-secondary" disabled={!userId}>Maybe</button>
+                      <button onClick={() => rsvp('not_going')} className="btn btn-outline-secondary" disabled={!userId || leaving}>{leaving ? '...' : 'Not going'}</button>
+                    </div>
+                  </div>
+                )}
 
                 {match.turf?.location?.lat && match.turf?.location?.lng && (
                   <div className="mt-3">

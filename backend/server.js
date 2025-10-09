@@ -1,9 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
+
+// Security headers
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 // CORS
 const allowed = process.env.CORS_ORIGIN
@@ -21,6 +33,23 @@ app.use(
 
 // Body parsing
 app.use(express.json());
+
+// Lightweight user id extraction for logs
+app.use((req, _res, next) => {
+  try {
+    const hdr = req.headers.authorization || req.headers.Authorization || '';
+    const raw = hdr.startsWith('Bearer ') ? hdr.slice(7) : '';
+    if (raw) {
+      const decoded = jwt.decode(raw);
+      if (decoded?.userId) req._uid = decoded.userId;
+    }
+  } catch {}
+  next();
+});
+
+// Request logs with user id
+morgan.token('uid', (req) => (req._uid ? String(req._uid) : '-'));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms uid=:uid'));
 
 // Mongo
 const mongoUri = process.env.MONGO_URI;
@@ -46,6 +75,9 @@ app.use((req, _res, next) => {
   next();
 });
 
+// Rate limiting
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 50, standardHeaders: 'draft-7', legacyHeaders: false });
+
 // Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
@@ -53,7 +85,7 @@ const turfRoutes = require('./routes/turf');
 const matchRoutes = require('./routes/match');
 const eventRoutes = require('./routes/event');
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/turfs', turfRoutes);
 app.use('/api/matches', matchRoutes);

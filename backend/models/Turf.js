@@ -16,4 +16,7 @@ const turfSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Helpful index for search/sort by name
+turfSchema.index({ name: 1 });
+
 module.exports = mongoose.model('Turf', turfSchema);

@@ -198,6 +198,11 @@ a:hover {
   transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
 }
 
+/* Highlight today's matches */
+.match-today {
+  background-color: rgba(22, 163, 74, 0.06);
+}
+
 .btn:focus {
   box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.18);
 }

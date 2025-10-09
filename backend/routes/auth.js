@@ -46,6 +46,15 @@ router.post('/register', async (req, res) => {
       preferredPosition = posMap[preferredPosition];
     }
 
+    // basic password policy: min 8, at least one letter and one number
+    const pw = String(password);
+    const hasLen = pw.length >= 8;
+    const hasLetter = /[A-Za-z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    if (!hasLen || !hasLetter || !hasNumber) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters and include a letter and a number' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(409).json({ message: 'User already exists' });
 

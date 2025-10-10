@@ -254,7 +254,7 @@ export default function Turfs() {
               </Card>
             </div>
           ) : (
-            <div className="col-lg-6">
+            <div className="col-12">
               <Card title="Create Turf" subtitle="Add a new community ground">
                 <form onSubmit={createTurf}>
                   <div className="mb-3">
@@ -316,7 +316,7 @@ export default function Turfs() {
             </div>
           )
         ) : (
-          <div className="col-lg-6">
+          <div className="col-12">
             <Card title="Need a turf added?" subtitle="Only administrators can publish new grounds">
               <p className="mb-0 small text-muted">Reach out to an administrator if you know about a turf that should be listed.</p>
             </Card>

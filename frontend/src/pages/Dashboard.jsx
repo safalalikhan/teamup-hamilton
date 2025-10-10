@@ -380,7 +380,7 @@ export default function Dashboard() {
         {/* Past & Cancelled third */}
         <Card title="Past & Cancelled Matches" subtitle="Browse previous games and cancellations">
           <div className="row g-4">
-            <div className="col-12 col-xl-7">
+            <div className="col-12 col-xl-6">
               <h3 className="h6 fw-semibold mb-2">Past Matches</h3>
               <div className="scroll-area">
                 <div className="row g-3">
@@ -414,7 +414,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="col-12 col-xl-5">
+            <div className="col-12 col-xl-6">
               <h3 className="h6 fw-semibold mb-2">Cancelled Matches</h3>
               <div className="scroll-area">
                 <ul className="list-group list-group-flush mb-0">

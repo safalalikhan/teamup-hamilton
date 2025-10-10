@@ -299,7 +299,7 @@ export default function Home() {
               title="Upcoming trainings & tournaments"
               subtitle="Open to everyone in the Hamilton community"
             >
-              <div className="scroll-area">
+              <div className="scroll-area scroll-area--tall scroll-area--section">
               {eventsLoading ? (
                 <div className="py-3 d-flex justify-content-center"><Spinner label="Loading events…" /></div>
               ) : eventsError ? (
@@ -426,7 +426,7 @@ export default function Home() {
               </div>
               <div className="card-body">
                 {annError ? <div className="text-danger small mb-2">{annError}</div> : null}
-                <div className="scroll-area">
+                <div className="scroll-area scroll-area--section">
                 <ul className="list-unstyled mb-0">
                   {annLoading ? (
                     <li className="small text-muted">Loading announcements…</li>

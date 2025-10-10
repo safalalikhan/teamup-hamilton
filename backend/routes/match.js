@@ -92,17 +92,32 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { date, time, turf, capacity } = req.body;
+    const { date, time, turf, capacity, location } = req.body;
     if (!date) return res.status(400).json({ message: 'date is required' });
     // Coerce to Date and validate minimum lead time (30 minutes)
     const start = new Date(date);
     if (Number.isNaN(start.getTime())) return res.status(400).json({ message: 'Invalid date' });
     const minLead = new Date(Date.now() + 30 * 60 * 1000);
     if (start < minLead) return res.status(400).json({ message: 'Match must be scheduled at least 30 minutes in advance' });
+    let matchLocation;
+    if (location) {
+      const latNum = Number(location.lat);
+      const lngNum = Number(location.lng);
+      if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
+        return res.status(400).json({ message: 'Location coordinates are invalid' });
+      }
+      matchLocation = {
+        address: typeof location.address === 'string' ? location.address.trim() : undefined,
+        lat: latNum,
+        lng: lngNum,
+      };
+    }
+
     const match = await Match.create({
       date: start.toISOString(),
       time,
       turf,
+      location: matchLocation,
       createdBy: req.user.userId,
       players: [],
       capacity: typeof capacity === 'number' ? capacity : (capacity ? Number(capacity) : undefined),

@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const verifyToken = require('../middleware/verifyToken');
 
 // Helper to normalize enums from UI labels (optional mapping)
@@ -14,6 +15,17 @@ const posMap = {
   Forward: 'attack',
   'No Preference': 'noPreference',
 };
+
+function validatePassword(password) {
+  const pw = String(password || '');
+  const hasLen = pw.length >= 8;
+  const hasLetter = /[A-Za-z]/.test(pw);
+  const hasNumber = /\d/.test(pw);
+  if (!hasLen || !hasLetter || !hasNumber) {
+    return 'Password must be at least 8 characters and include a letter and a number';
+  }
+  return null;
+}
 
 router.post('/register', async (req, res) => {
   try {
@@ -46,13 +58,9 @@ router.post('/register', async (req, res) => {
       preferredPosition = posMap[preferredPosition];
     }
 
-    // basic password policy: min 8, at least one letter and one number
-    const pw = String(password);
-    const hasLen = pw.length >= 8;
-    const hasLetter = /[A-Za-z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    if (!hasLen || !hasLetter || !hasNumber) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters and include a letter and a number' });
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError });
     }
 
     const existingUser = await User.findOne({ email });
@@ -138,6 +146,98 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('[Login Error]', err);
     return res.status(500).json({ error: 'Server error during login' });
+  }
+});
+
+router.post('/request-password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    const genericResponse = {
+      message: 'If that email is registered, password reset instructions have been sent.',
+    };
+
+    if (!user) {
+      return res.json(genericResponse);
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    if (process.env.NODE_ENV !== 'production') {
+      genericResponse.resetToken = rawToken;
+      console.log(
+        `[PasswordReset] Token for ${user.email}: ${rawToken} (expires ${user.resetPasswordExpires.toISOString()})`
+      );
+    }
+
+    return res.json(genericResponse);
+  } catch (err) {
+    console.error('[Request Password Reset Error]', err);
+    return res.status(500).json({ error: 'Server error during password reset request' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(String(token)).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    const payload = {
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      role: user.role,
+    };
+    const newToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    return res.json({
+      message: 'Password reset successfully',
+      token: newToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        skillLevel: user.skillLevel,
+        preferredPosition: user.preferredPosition,
+        location: user.location,
+        availability: user.availability,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error('[Reset Password Error]', err);
+    return res.status(500).json({ error: 'Server error during password reset' });
   }
 });
 

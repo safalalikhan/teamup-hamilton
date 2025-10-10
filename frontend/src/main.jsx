@@ -11,6 +11,7 @@ import Turfs from "./pages/Turfs";
 import Profile from "./pages/Profile";
 import MatchDetail from "./pages/MatchDetail";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/" element={<Home />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/turfs" element={<Turfs />} />

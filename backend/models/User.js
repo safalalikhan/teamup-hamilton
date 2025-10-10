@@ -57,6 +57,9 @@ const userSchema = new mongoose.Schema(
         endTime: { type: String, required: true },   // "20:00"
       },
     ],
+
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

@@ -185,17 +185,7 @@ export default function Turfs() {
         subtitle="Find suitable grounds and add new ones you know."
       />
 
-      <Card title="Map Overview" className="mb-3">
-        {loading ? (
-          <div className="py-3"><Spinner label="Loading map…" /></div>
-        ) : (
-          <GoogleMap
-            center={{ lat: -37.787, lng: 175.279 }}
-            markers={markers}
-            height={320}
-          />
-        )}
-      </Card>
+      {/* Create/Edit at the top */}
       <div className="row g-4 mb-4">
         {isAdmin ? (
           editingId ? (
@@ -334,75 +324,93 @@ export default function Turfs() {
         )}
       </div>
 
-      <Card title="All Turfs" subtitle="Use filters to narrow the list below">
-        <form onSubmit={onFilter} className="row g-3 mb-3 align-items-end">
-          {['lighting', 'hasGoalposts', 'isBookable'].map((k) => (
-            <div key={k} className="col-12 col-sm-4 col-lg-3">
-              <label className="form-label text-capitalize">{k}</label>
-              <select
-                value={filters[k]}
-                onChange={(e) => setFilters({ ...filters, [k]: e.target.value })}
-                className="form-select"
-              >
-                <option value="">Any</option>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-          ))}
-          <div className="col-12 col-sm-4 col-lg-3 d-flex gap-2">
-            <button type="submit" className="btn btn-primary flex-grow-1">Apply</button>
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={async () => {
-                const defaults = { lighting: '', hasGoalposts: '', isBookable: '' };
-                setFilters(defaults);
-                await loadTurfs(defaults);
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </form>
-        {error && <div className="text-danger small mb-3">{error}</div>}
-
-        {loading ? (
-          <div className="py-3"><Spinner label="Loading turfs…" /></div>
-        ) : turfs.length === 0 ? (
-          <div className="py-4 small text-muted">No turfs found.</div>
-        ) : (
-          <div className="scroll-area">
-          <ul className="list-group list-group-flush mb-0">
-            {turfs.map((t) => (
-              <li key={t._id} className="list-group-item">
-                <div className="fw-semibold">{t.name}</div>
-                <div className="small text-muted">
-                  {t.location?.address || 'No address'} · Lighting: {String(!!t.lighting)} · Goalposts: {String(!!t.hasGoalposts)} · Bookable: {String(!!t.isBookable)}
+      {/* Map and list side-by-side */}
+      <div className="row g-4">
+        <div className="col-lg-6">
+          <Card title="Map Overview">
+            {loading ? (
+              <div className="py-3"><Spinner label="Loading map…" /></div>
+            ) : (
+              <GoogleMap
+                center={{ lat: -37.787, lng: 175.279 }}
+                markers={markers}
+                height={360}
+              />
+            )}
+          </Card>
+        </div>
+        <div className="col-lg-6">
+          <Card title="All Turfs" subtitle="Use filters to narrow the list below">
+            <form onSubmit={onFilter} className="row g-3 mb-3 align-items-end">
+              {['lighting', 'hasGoalposts', 'isBookable'].map((k) => (
+                <div key={k} className="col-12 col-sm-4">
+                  <label className="form-label text-capitalize">{k}</label>
+                  <select
+                    value={filters[k]}
+                    onChange={(e) => setFilters({ ...filters, [k]: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="">Any</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
                 </div>
-                {t.availableTimeSlots?.length > 0 && (
-                  <div className="small text-muted mt-1">
-                    Slots: {t.availableTimeSlots.join(', ')}
-                  </div>
-                )}
-                {isAdmin && (
-                  <div className="mt-2 d-flex gap-2">
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${editingId === t._id ? 'btn-primary' : 'btn-outline-primary'}`}
-                      onClick={() => beginEdit(t)}
-                      disabled={editingId === t._id}
-                    >
-                      {editingId === t._id ? 'Editing' : 'Edit'}
-                    </button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          </div>
-        )}
-      </Card>
+              ))}
+              <div className="col-12 d-flex gap-2">
+                <button type="submit" className="btn btn-primary flex-grow-1">Apply</button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={async () => {
+                    const defaults = { lighting: '', hasGoalposts: '', isBookable: '' };
+                    setFilters(defaults);
+                    await loadTurfs(defaults);
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
+            {error && <div className="text-danger small mb-3">{error}</div>}
+
+            {loading ? (
+              <div className="py-3"><Spinner label="Loading turfs…" /></div>
+            ) : turfs.length === 0 ? (
+              <div className="py-4 small text-muted">No turfs found.</div>
+            ) : (
+              <div className="scroll-area">
+              <ul className="list-group list-group-flush mb-0">
+                {turfs.map((t) => (
+                  <li key={t._id} className="list-group-item">
+                    <div className="fw-semibold">{t.name}</div>
+                    <div className="small text-muted">
+                      {t.location?.address || 'No address'} · Lighting: {String(!!t.lighting)} · Goalposts: {String(!!t.hasGoalposts)} · Bookable: {String(!!t.isBookable)}
+                    </div>
+                    {t.availableTimeSlots?.length > 0 && (
+                      <div className="small text-muted mt-1">
+                        Slots: {t.availableTimeSlots.join(', ')}
+                      </div>
+                    )}
+                    {isAdmin && (
+                      <div className="mt-2 d-flex gap-2">
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${editingId === t._id ? 'btn-primary' : 'btn-outline-primary'}`}
+                          onClick={() => beginEdit(t)}
+                          disabled={editingId === t._id}
+                        >
+                          {editingId === t._id ? 'Editing' : 'Edit'}
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </Layout>
   );
 }

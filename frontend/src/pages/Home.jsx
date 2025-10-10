@@ -225,6 +225,7 @@ export default function Home() {
                 subtitle="Only admins can publish these events"
                 className="mb-3"
               >
+                <div className="scroll-area">
                 <form onSubmit={handleCreateEvent} className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label">Title</label>
@@ -290,6 +291,7 @@ export default function Home() {
                     </button>
                   </div>
                 </form>
+                </div>
               </Card>
             )}
 
@@ -297,6 +299,7 @@ export default function Home() {
               title="Upcoming trainings & tournaments"
               subtitle="Open to everyone in the Hamilton community"
             >
+              <div className="scroll-area">
               {eventsLoading ? (
                 <div className="py-3 d-flex justify-content-center"><Spinner label="Loading events…" /></div>
               ) : eventsError ? (
@@ -339,6 +342,7 @@ export default function Home() {
                   );
                 })
               )}
+              </div>
             </Card>
           </div>
 
@@ -422,6 +426,7 @@ export default function Home() {
               </div>
               <div className="card-body">
                 {annError ? <div className="text-danger small mb-2">{annError}</div> : null}
+                <div className="scroll-area">
                 <ul className="list-unstyled mb-0">
                   {annLoading ? (
                     <li className="small text-muted">Loading announcements…</li>
@@ -477,6 +482,7 @@ export default function Home() {
                     })
                   )}
                 </ul>
+                </div>
               </div>
             </div>
 

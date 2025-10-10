@@ -1,0 +1,16 @@
+[build]
+# Build from the frontend directory using Vite
+base = "frontend"
+command = "npm run build"
+publish = "dist"
+
+[build.environment]
+# Ensure a modern Node for Netlify builds
+NODE_VERSION = "20"
+
+# Optional: you can also set VITE_API_URL in the Netlify UI for production
+# [context.production.environment]
+# VITE_API_URL = "https://your-backend.onrender.com"
+
+
+

@@ -85,6 +85,10 @@ export default function SignIn() {
                     />
                   </div>
 
+                  <div className="d-flex justify-content-end mb-3">
+                    <Link to="/reset-password" className="small">Forgot password?</Link>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={loading}

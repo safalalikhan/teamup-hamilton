@@ -530,9 +530,15 @@ a:hover {
 
 /* Scrollable content containers --------------------------------- */
 .scroll-area {
-  /* Fix the height of busy sections and allow internal scrolling */
-  max-height: clamp(280px, 55vh, 560px);
+  /* Fixed visual height with internal scroll; responsive across viewports */
+  height: clamp(280px, 50vh, 560px);
   overflow: auto;
+}
+
+@media (min-width: 992px) {
+  .scroll-area {
+    height: clamp(320px, 55vh, 640px);
+  }
 }
 
 .scroll-area::-webkit-scrollbar {

@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 
-function MapView({ lat, lng, height = 240 }) {
+function MapView({ lat, lng, height = 320 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const ref = useRef(null);
 
@@ -225,7 +225,7 @@ export default function MatchDetail() {
                   <MapView
                     lat={Number(match.turf.location.lat)}
                     lng={Number(match.turf.location.lng)}
-                    height={280}
+                    height={360}
                   />
                 </div>
               )}

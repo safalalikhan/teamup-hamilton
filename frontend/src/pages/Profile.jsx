@@ -219,7 +219,7 @@ export default function Profile() {
                 </button>
               </div>
 
-              <div className="d-flex flex-column gap-2">
+              <div className="d-flex flex-column gap-2 scroll-area">
                 {form.availability?.map((slot, idx) => (
                   <div key={idx} className="row g-2 align-items-center">
                     <div className="col-sm">

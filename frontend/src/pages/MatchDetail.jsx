@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 
-function MapView({ lat, lng, height = 240 }) {
+function MapView({ lat, lng, height = 320 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const ref = useRef(null);
 
@@ -225,7 +225,7 @@ export default function MatchDetail() {
                   <MapView
                     lat={Number(match.turf.location.lat)}
                     lng={Number(match.turf.location.lng)}
-                    height={280}
+                    height={360}
                   />
                 </div>
               )}
@@ -243,7 +243,8 @@ export default function MatchDetail() {
                   {(!match.players || match.players.length === 0) ? (
                     <div className="small text-muted">No players have joined yet.</div>
                   ) : (
-                    <ul className="list-group list-group-flush">
+                    <div className="scroll-area">
+                    <ul className="list-group list-group-flush mb-0">
                       {match.players.map((p) => (
                         <li key={p._id} className="list-group-item d-flex flex-column gap-1">
                           <div className="fw-semibold">{p.name || p.email}</div>
@@ -257,6 +258,7 @@ export default function MatchDetail() {
                         </li>
                       ))}
                     </ul>
+                    </div>
                   )}
                 </Card>
               </div>

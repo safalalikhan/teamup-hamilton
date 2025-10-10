@@ -140,48 +140,53 @@ export default function Profile() {
               <div className="alert alert-danger" role="alert">{error}</div>
             )}
 
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label">Name</label>
-                <input
-                  className="form-control"
-                  value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                />
+            {/* Details and map side by side */}
+            <div className="row g-4">
+              <div className="col-lg-6">
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label">Name</label>
+                    <input
+                      className="form-control"
+                      value={form.name}
+                      onChange={(e) => updateField('name', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Email</label>
+                    <input
+                      className="form-control"
+                      value={form.email}
+                      onChange={(e) => updateField('email', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Skill level</label>
+                    <select
+                      className="form-select"
+                      value={form.skillLevel}
+                      onChange={(e) => updateField('skillLevel', e.target.value)}
+                    >
+                      {LEVELS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Preferred position</label>
+                    <select
+                      className="form-select"
+                      value={form.preferredPosition}
+                      onChange={(e) => updateField('preferredPosition', e.target.value)}
+                    >
+                      {POSITIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div className="col-md-6">
-                <label className="form-label">Email</label>
-                <input
-                  className="form-control"
-                  value={form.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Skill level</label>
-                <select
-                  className="form-select"
-                  value={form.skillLevel}
-                  onChange={(e) => updateField('skillLevel', e.target.value)}
-                >
-                  {LEVELS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Preferred position</label>
-                <select
-                  className="form-select"
-                  value={form.preferredPosition}
-                  onChange={(e) => updateField('preferredPosition', e.target.value)}
-                >
-                  {POSITIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-12">
+              <div className="col-lg-6">
                 <label className="form-label">Location</label>
                 <LocationPicker
                   value={{
@@ -197,6 +202,7 @@ export default function Profile() {
                       lng: loc.lng || ''
                     }))
                   }
+                  height={320}
                 />
               </div>
             </div>
@@ -213,7 +219,7 @@ export default function Profile() {
                 </button>
               </div>
 
-              <div className="d-flex flex-column gap-2">
+              <div className="d-flex flex-column gap-2 scroll-area">
                 {form.availability?.map((slot, idx) => (
                   <div key={idx} className="row g-2 align-items-center">
                     <div className="col-sm">

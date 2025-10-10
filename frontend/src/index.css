@@ -138,7 +138,7 @@ a:hover {
 }
 
 .app-navbar .navbar {
-  padding-block: 0.75rem;
+  padding-block: 0.6rem;
 }
 
 .app-brand-logo {
@@ -448,7 +448,17 @@ a:hover {
   gap: 1.5rem;
   align-items: center;
   justify-content: space-between;
-  padding-block: 0.85rem;
+  padding-block: 0.6rem;
+}
+
+/* Tighter brand logo sizes per region */
+.app-navbar .app-brand-logo {
+  width: clamp(52px, 5vw, 72px);
+  height: clamp(52px, 5vw, 72px);
+}
+.app-footer .app-brand-logo {
+  width: 40px;
+  height: 40px;
 }
 
 @media (min-width: 576px) {
@@ -532,13 +542,30 @@ a:hover {
 .scroll-area {
   /* Allow content to size naturally up to a cap; scroll when overflowing */
   max-height: clamp(280px, 50vh, 560px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (min-width: 992px) {
   .scroll-area {
     max-height: clamp(320px, 55vh, 640px);
   }
+}
+
+/* Slightly taller cap when desired (e.g., past/cancelled lists) */
+.scroll-area--tall {
+  max-height: clamp(360px, 65vh, 720px);
+}
+
+/* Ensure a comfortable minimum when content is short */
+.scroll-area--section {
+  min-height: clamp(100px, 18vh, 200px);
+}
+
+/* Prevent inner card content causing horizontal scroll */
+.app-card__body,
+.card .card-body {
+  overflow-x: hidden;
 }
 
 .scroll-area::-webkit-scrollbar {

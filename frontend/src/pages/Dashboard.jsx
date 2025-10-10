@@ -377,66 +377,62 @@ export default function Dashboard() {
           </form>
         </Card>
 
-        {/* Past & Cancelled third */}
-        <Card title="Past & Cancelled Matches" subtitle="Browse previous games and cancellations">
-          <div className="row g-4">
-            <div className="col-12 col-xl-6">
-              <h3 className="h6 fw-semibold mb-2">Past Matches</h3>
-              <div className="scroll-area">
-                <div className="row g-3">
-                  {purePastMatches.map((m) => (
-                    <div key={m._id} className="col-12 col-md-6">
-                      <div className="card h-100 shadow-sm border-0">
-                        <div className="card-body d-flex flex-column gap-2">
-                          <div className="d-flex justify-content-between align-items-start gap-2">
-                            <div>
-                              <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
-                              {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
-                            </div>
-                            <span className="badge bg-light text-muted">{m.players?.length || 0} players</span>
-                          </div>
-                          <div className="d-flex flex-wrap gap-2 small text-muted">
-                            <span className="badge bg-secondary-subtle text-secondary">Completed</span>
-                            {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
-                          </div>
-                          <Link to={`/matches/${m._id}`} className="btn btn-outline-primary btn-sm mt-auto">View recap</Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {!loading && purePastMatches.length === 0 && (
-                    <div className="col-12">
-                      <div className="card border-0 shadow-sm">
-                        <div className="card-body text-muted small">No past matches yet.</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="col-12 col-xl-6">
-              <h3 className="h6 fw-semibold mb-2">Cancelled Matches</h3>
+        {/* Past & Cancelled third: separate cards, stacked lists */}
+        <div className="row g-4">
+          <div className="col-12 col-xl-6">
+            <Card title="Past Matches" subtitle="Browse results and revisit previous games">
               <div className="scroll-area">
                 <ul className="list-group list-group-flush mb-0">
-                  {cancelledMatches.map((m) => (
-                    <li key={m._id} className="list-group-item d-flex flex-column gap-1">
-                      <div className="d-flex flex-wrap align-items-center gap-2 fw-semibold">
-                        <span>{new Date(m.date).toLocaleString()}</span>
-                        {m.turf?.name && <span className="badge bg-light text-muted">@ {m.turf.name}</span>}
-                        <span className="badge bg-success-subtle text-success">Cancelled</span>
+                  {purePastMatches.map((m) => (
+                    <li key={m._id} className="list-group-item">
+                      <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                        <div className="me-md-3">
+                          <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                          {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
+                        </div>
+                        <div className="d-flex flex-wrap gap-2 small text-muted align-items-center">
+                          <span className="badge bg-secondary-subtle text-secondary">Completed</span>
+                          {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
+                          <span className="badge bg-light text-muted">{m.players?.length || 0} players</span>
+                        </div>
+                        <Link to={`/matches/${m._id}`} className="btn btn-outline-primary btn-sm ms-md-auto">View recap</Link>
                       </div>
-                      {m.turf?.location?.address && <div className="small text-muted">{m.turf.location.address}</div>}
-                      <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm mt-1 align-self-start">Details</Link>
                     </li>
                   ))}
-                  {!loading && cancelledMatches.length === 0 && (
-                    <li className="list-group-item small text-muted">No cancelled matches.</li>
+                  {!loading && purePastMatches.length === 0 && (
+                    <li className="list-group-item text-muted small">No past matches yet.</li>
                   )}
                 </ul>
               </div>
-            </div>
+            </Card>
           </div>
-        </Card>
+          <div className="col-12 col-xl-6">
+            <Card title="Cancelled Matches" subtitle="Matches cancelled by organiser">
+              <div className="scroll-area">
+                <ul className="list-group list-group-flush mb-0">
+                  {cancelledMatches.map((m) => (
+                    <li key={m._id} className="list-group-item">
+                      <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2">
+                        <div className="me-md-3">
+                          <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                          {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
+                        </div>
+                        <div className="d-flex flex-wrap gap-2 small text-muted align-items-center">
+                          <span className="badge bg-success-subtle text-success">Cancelled</span>
+                          {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
+                        </div>
+                        <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm ms-md-auto">Details</Link>
+                      </div>
+                    </li>
+                  ))}
+                  {!loading && cancelledMatches.length === 0 && (
+                    <li className="list-group-item text-muted small">No cancelled matches.</li>
+                  )}
+                </ul>
+              </div>
+            </Card>
+          </div>
+        </div>
     </Layout>
   );
 }

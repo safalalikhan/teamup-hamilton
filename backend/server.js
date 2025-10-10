@@ -76,12 +76,14 @@ const userRoutes = require('./routes/user');
 const turfRoutes = require('./routes/turf');
 const matchRoutes = require('./routes/match');
 const eventRoutes = require('./routes/event');
+const announcementRoutes = require('./routes/announcement');
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/turfs', turfRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Health
 app.get('/', (_req, res) => res.send('API is working'));

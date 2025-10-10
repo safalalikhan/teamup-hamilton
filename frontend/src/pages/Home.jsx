@@ -223,10 +223,9 @@ export default function Home() {
               <Card
                 title="Add training or tournament"
                 subtitle="Only admins can publish these events"
-                className="mb-3"
+                className="mb-4"
               >
-                <div className="scroll-area">
-                <form onSubmit={handleCreateEvent} className="row g-3">
+                  <form onSubmit={handleCreateEvent} className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label">Title</label>
                     <input
@@ -290,16 +289,16 @@ export default function Home() {
                       Reset
                     </button>
                   </div>
-                </form>
-                </div>
+                  </form>
               </Card>
             )}
 
             <Card
               title="Upcoming trainings & tournaments"
               subtitle="Open to everyone in the Hamilton community"
+              className="mb-4"
             >
-              <div className="scroll-area scroll-area--tall scroll-area--section">
+              <div className="scroll-area scroll-area--section">
               {eventsLoading ? (
                 <div className="py-3 d-flex justify-content-center"><Spinner label="Loading events…" /></div>
               ) : eventsError ? (
@@ -348,7 +347,7 @@ export default function Home() {
 
           <div className="col-12 col-lg-4">
             {isAdmin && (
-              <div className="card shadow-sm mb-3">
+              <div className="card shadow-sm mb-4">
                 <div className="card-header">
                   <h2 className="h6 fw-semibold mb-0">Share announcement</h2>
                 </div>
@@ -420,7 +419,7 @@ export default function Home() {
               </div>
             )}
 
-            <div className="card shadow-sm mb-3">
+            <div className="card shadow-sm mb-4">
               <div className="card-header">
                 <h2 className="h6 fw-semibold mb-0">Announcements</h2>
               </div>

@@ -559,7 +559,7 @@ a:hover {
 
 /* Ensure a comfortable minimum when content is short */
 .scroll-area--section {
-  min-height: clamp(140px, 24vh, 240px);
+  min-height: clamp(100px, 18vh, 200px);
 }
 
 /* Prevent inner card content causing horizontal scroll */

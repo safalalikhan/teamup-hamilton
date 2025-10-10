@@ -201,6 +201,8 @@ export default function Dashboard() {
     () => pastMatches.filter((m) => String(m.status) !== 'Cancelled'),
     [pastMatches]
   );
+  const pastCount = purePastMatches.length;
+  const cancelledCount = cancelledMatches.length;
 
   return (
     <Layout>
@@ -380,8 +382,8 @@ export default function Dashboard() {
         {/* Past & Cancelled third: separate cards, stacked lists */}
         <div className="row g-4">
           <div className="col-12 col-xl-6">
-            <Card title="Past Matches" subtitle="Browse results and revisit previous games">
-              <div className="scroll-area">
+            <Card title={`Past Matches (${pastCount})`} subtitle="Browse results and revisit previous games">
+              <div className="scroll-area scroll-area--tall">
                 <ul className="list-group list-group-flush mb-0">
                   {purePastMatches.map((m) => (
                     <li key={m._id} className="list-group-item">
@@ -407,8 +409,8 @@ export default function Dashboard() {
             </Card>
           </div>
           <div className="col-12 col-xl-6">
-            <Card title="Cancelled Matches" subtitle="Matches cancelled by organiser">
-              <div className="scroll-area">
+            <Card title={`Cancelled Matches (${cancelledCount})`} subtitle="Matches cancelled by organiser">
+              <div className="scroll-area scroll-area--tall">
                 <ul className="list-group list-group-flush mb-0">
                   {cancelledMatches.map((m) => (
                     <li key={m._id} className="list-group-item">

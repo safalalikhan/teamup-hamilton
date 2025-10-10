@@ -541,6 +541,11 @@ a:hover {
   }
 }
 
+/* Slightly taller cap when desired (e.g., past/cancelled lists) */
+.scroll-area--tall {
+  max-height: clamp(360px, 65vh, 720px);
+}
+
 .scroll-area::-webkit-scrollbar {
   width: 8px;
 }

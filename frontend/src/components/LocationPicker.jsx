@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+// Loads the Maps SDK (Places) once, then lets users pick a location.
 function loadGoogle({ apiKey }) {
   if (typeof window !== 'undefined' && window.google && window.google.maps) return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -26,12 +27,12 @@ export default function LocationPicker({ value, onChange, height = 280, defaultC
   const [ready, setReady] = useState(false);
   const inputRef = useRef(null);
   const mapRef = useRef(null);
-  const gmap = useRef(null);
+  const map = useRef(null);
   const marker = useRef(null);
   const geocoder = useRef(null);
 
   useEffect(() => {
-    if (!apiKey) return; // show plain input fallback
+    if (!apiKey) return; // plain input fallback when no key is set
     loadGoogle({ apiKey })
       .then(() => setReady(true))
       .catch(() => setReady(false));
@@ -40,23 +41,23 @@ export default function LocationPicker({ value, onChange, height = 280, defaultC
   useEffect(() => {
     if (!ready || !mapRef.current) return;
     const center = value?.lat && value?.lng ? { lat: Number(value.lat), lng: Number(value.lng) } : defaultCenter;
-    gmap.current = new window.google.maps.Map(mapRef.current, { center, zoom: 13 });
-    marker.current = new window.google.maps.Marker({ position: center, map: gmap.current, draggable: true });
+    map.current = new window.google.maps.Map(mapRef.current, { center, zoom: 13 });
+    marker.current = new window.google.maps.Marker({ position: center, map: map.current, draggable: true });
     geocoder.current = new window.google.maps.Geocoder();
 
-    const ac = new window.google.maps.places.Autocomplete(inputRef.current, { fields: ['formatted_address', 'geometry', 'name'] });
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
+    const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, { fields: ['formatted_address', 'geometry', 'name'] });
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
       const loc = place.geometry?.location;
       if (!loc) return;
       const lat = loc.lat();
       const lng = loc.lng();
-      gmap.current.setCenter({ lat, lng });
+      map.current.setCenter({ lat, lng });
       marker.current.setPosition({ lat, lng });
       onChange?.({ address: place.formatted_address || place.name || '', lat, lng });
     });
 
-    gmap.current.addListener('click', (e) => {
+    map.current.addListener('click', (e) => {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       marker.current.setPosition({ lat, lng });
@@ -80,10 +81,10 @@ export default function LocationPicker({ value, onChange, height = 280, defaultC
   }, [ready]);
 
   useEffect(() => {
-    if (!gmap.current || !marker.current) return;
+    if (!map.current || !marker.current) return;
     if (value?.lat && value?.lng) {
       const pos = { lat: Number(value.lat), lng: Number(value.lng) };
-      gmap.current.setCenter(pos);
+      map.current.setCenter(pos);
       marker.current.setPosition(pos);
     }
   }, [value?.lat, value?.lng]);

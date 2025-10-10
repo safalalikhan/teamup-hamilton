@@ -2,6 +2,7 @@ const express = require('express');
 const Match = require('../models/Match');
 const verifyToken = require('../middleware/verifyToken');
 const rateLimit = require('express-rate-limit');
+const log = require('../utils/log');
 
 const router = express.Router();
 
@@ -93,6 +94,7 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { date, time, turf, capacity, location } = req.body;
+    log.info('[Match] Create', { by: req.user.userId, turf, date, time });
     if (!date) return res.status(400).json({ message: 'date is required' });
     // Coerce to Date and validate minimum lead time (30 minutes)
     const start = new Date(date);
@@ -124,6 +126,7 @@ router.post('/', verifyToken, async (req, res) => {
     });
     return res.status(201).json(match);
   } catch (err) {
+    log.error('[Match] Create failed', err?.message || err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -181,6 +184,7 @@ router.post('/:id/rsvp', rsvpLimiter, verifyToken, async (req, res) => {
     const going = match.rsvps.filter((r) => r.status === 'going').map((r) => String(r.user));
     match.players = Array.from(new Set(going));
     await match.save();
+    log.info('[Match] RSVP', { match: req.params.id, user: uid, status });
     const derived = computeDerived(match);
     return res.json({ ok: true, status, ...derived });
   } catch (err) {

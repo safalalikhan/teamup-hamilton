@@ -1,5 +1,7 @@
 import React from 'react';
 
+// Lightweight Google Map component.
+// Loads the Maps JS SDK on demand and renders optional markers.
 export default function GoogleMap({ center, markers = [], height = 300, zoom = 12 }) {
   const apiKey = (typeof window !== 'undefined' && localStorage.getItem('gmapsKey')) || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const ref = React.useRef(null);
@@ -34,8 +36,8 @@ export default function GoogleMap({ center, markers = [], height = 300, zoom = 1
           title: m.title,
         });
         if (m.info) {
-          const iw = new window.google.maps.InfoWindow({ content: m.info });
-          marker.addListener('click', () => iw.open({ map, anchor: marker }));
+          const infoWindow = new window.google.maps.InfoWindow({ content: m.info });
+          marker.addListener('click', () => infoWindow.open({ map, anchor: marker }));
         }
       });
     });

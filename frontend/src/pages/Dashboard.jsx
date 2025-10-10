@@ -209,7 +209,7 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" />
 
         {/* Upcoming first */}
-        <Card title="Upcoming Matches" subtitle="Join an open game or create one below.">
+        <Card title="Upcoming Matches" subtitle="Join an open game or create one below." className="mb-4">
           {error && <div className="text-danger small mb-2">{error}</div>}
           {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
           <div className="scroll-area">
@@ -283,7 +283,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Create second */}
-        <Card title="Create Match">
+        <Card title="Create Match" className="mb-4">
           <form onSubmit={create} className="row g-3">
             <div className="col-12 col-md-4">
               <label className="form-label">Kick-off</label>
@@ -380,7 +380,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Past & Cancelled third: separate cards, stacked lists */}
-        <div className="row g-4">
+        <div className="row g-5 mt-3">
           <div className="col-12 col-xl-6">
             <Card title={`Past Matches (${pastCount})`} subtitle="Browse results and revisit previous games">
               <div className="scroll-area scroll-area--tall">

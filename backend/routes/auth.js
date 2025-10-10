@@ -123,6 +123,8 @@ router.post('/login', async (req, res) => {
 
     const token = signAuthToken(user);
 
+
+    
     return res.status(200).json({
       token,
       user: {

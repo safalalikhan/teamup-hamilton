@@ -71,8 +71,15 @@ export default function MatchDetail() {
   useEffect(() => { load(); }, [id]);
 
   const userId = user?._id || user?.id;
+  const creatorId = useMemo(() => {
+    if (!match?.createdBy) return null;
+    const val = match.createdBy;
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') return val._id || val.id || null;
+    return null;
+  }, [match?.createdBy]);
   const isPast = match?.date ? new Date(match.date).getTime() < Date.now() : false;
-  const canManageMatch = Boolean(user?.role === 'admin' || (match?.createdBy && String(match.createdBy) === String(userId)));
+  const canManageMatch = Boolean(user?.role === 'admin' || (creatorId && userId && String(creatorId) === String(userId)));
 
   const isParticipant = useMemo(() => {
     if (!match?.players || !userId) return false;

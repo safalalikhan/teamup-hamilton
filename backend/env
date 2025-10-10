@@ -1,6 +1,6 @@
 CLEAN_DEMO_ENV=true
 MONGO_URI=mongodb+srv://USER:PASS@CLUSTER.mongodb.net/?retryWrites=true&w=majority
 MONGO_DB_NAME=teamup-hamilton-demo
-JWT_SECRET=dummy-key
+JWT_SECRET=aed5dbeea0dd639864baf33bc39b9388d43f9df60d0c309a4cfedba9631ac0a1b0d0ad36854c9bcb2358c2e35a9d14a31d52914813b41f30506bbd95ec06d24d
 CORS_ORIGIN=http://localhost:5173
 PORT=5001

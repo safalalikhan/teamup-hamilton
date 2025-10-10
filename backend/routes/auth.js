@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const verifyToken = require('../middleware/verifyToken');
+const { signAuthToken } = require('../utils/jwt');
+const log = require('../utils/log');
 
 // Helper to normalize enums from UI labels (optional mapping)
 const levelMap = { Beginner: 'beginner', Intermediate: 'intermediate', Advanced: 'proficient' };
@@ -27,6 +28,7 @@ function validatePassword(password) {
   return null;
 }
 
+// Register a new user
 router.post('/register', async (req, res) => {
   try {
     let {
@@ -63,6 +65,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: passwordError });
     }
 
+    log.info('[Auth] Register attempt', { email });
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(409).json({ message: 'User already exists' });
 
@@ -79,14 +82,8 @@ router.post('/register', async (req, res) => {
       availability,
     });
 
-    // (Optional) issue token on register for smoother UX
-    const payload = {
-      userId: user._id,
-      userName: user.name,
-      userEmail: user.email,
-      role: user.role,
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Issue token on register for smoother UX
+    const token = signAuthToken(user);
 
     return res.status(201).json({
       message: 'User registered successfully',
@@ -103,11 +100,12 @@ router.post('/register', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[Register Error]', err);
-    return res.status(500).json({ error: 'Server error during registration' });
+    log.error('[Register Error]', err?.message || err);
+    return res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
+// Log a user in
 router.post('/login', async (req, res) => {
   try {
     let { email, password } = req.body;
@@ -116,19 +114,14 @@ router.post('/login', async (req, res) => {
 
     email = String(email).trim().toLowerCase();
 
+    log.info('[Auth] Login attempt', { email });
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid email or password' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
 
-    const payload = {
-      userId: user._id,
-      userName: user.name,
-      userEmail: user.email,
-      role: user.role,
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = signAuthToken(user);
 
     return res.status(200).json({
       token,
@@ -144,17 +137,19 @@ router.post('/login', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[Login Error]', err);
-    return res.status(500).json({ error: 'Server error during login' });
+    log.error('[Login Error]', err?.message || err);
+    return res.status(500).json({ message: 'Server error during login' });
   }
 });
 
+// Request a password reset token (token is returned only in dev for convenience)
 router.post('/request-password-reset', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
     const normalizedEmail = String(email).trim().toLowerCase();
+    log.info('[Auth] Password reset request', { email: normalizedEmail });
     const user = await User.findOne({ email: normalizedEmail });
     const genericResponse = {
       message: 'If that email is registered, password reset instructions have been sent.',
@@ -173,18 +168,20 @@ router.post('/request-password-reset', async (req, res) => {
 
     if (process.env.NODE_ENV !== 'production') {
       genericResponse.resetToken = rawToken;
-      console.log(
-        `[PasswordReset] Token for ${user.email}: ${rawToken} (expires ${user.resetPasswordExpires.toISOString()})`
-      );
+      log.info('[PasswordReset] token generated', {
+        email: user.email,
+        expires: user.resetPasswordExpires.toISOString(),
+      });
     }
 
     return res.json(genericResponse);
   } catch (err) {
-    console.error('[Request Password Reset Error]', err);
-    return res.status(500).json({ error: 'Server error during password reset request' });
+    log.error('[Request Password Reset Error]', err?.message || err);
+    return res.status(500).json({ message: 'Server error during password reset request' });
   }
 });
 
+// Reset password using a valid token
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, password } = req.body;
@@ -213,13 +210,7 @@ router.post('/reset-password', async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    const payload = {
-      userId: user._id,
-      userName: user.name,
-      userEmail: user.email,
-      role: user.role,
-    };
-    const newToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const newToken = signAuthToken(user);
 
     return res.json({
       message: 'Password reset successfully',
@@ -236,19 +227,20 @@ router.post('/reset-password', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[Reset Password Error]', err);
-    return res.status(500).json({ error: 'Server error during password reset' });
+    log.error('[Reset Password Error]', err?.message || err);
+    return res.status(500).json({ message: 'Server error during password reset' });
   }
 });
 
+// Return current user profile
 router.get('/me', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     return res.json(user);
   } catch (err) {
-    console.error('[Me Error]', err);
-    return res.status(500).json({ error: 'Server error' });
+    log.error('[Me Error]', err?.message || err);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

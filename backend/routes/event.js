@@ -3,6 +3,7 @@ const router = express.Router();
 const Event = require('../models/Event');
 const verifyToken = require('../middleware/verifyToken');
 const requireAdmin = require('../middleware/requireAdmin');
+const log = require('../utils/log');
 
 // Get all events (public)
 router.get('/', async (_req, res) => {
@@ -10,7 +11,7 @@ router.get('/', async (_req, res) => {
     const events = await Event.find().sort({ date: 1, createdAt: -1 });
     res.json(events);
   } catch (error) {
-    console.error('[Events GET]', error);
+    log.error('[Events GET]', error?.message || error);
     res.status(500).json({ message: 'Failed to load events' });
   }
 });
@@ -33,9 +34,10 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
       createdBy: req.user.userId,
     });
 
+    log.info('[Events POST] Created', { by: req.user.userId, id: event._id, title: event.title });
     res.status(201).json(event);
   } catch (error) {
-    console.error('[Events POST]', error);
+    log.error('[Events POST]', error?.message || error);
     res.status(500).json({ message: 'Failed to create event' });
   }
 });

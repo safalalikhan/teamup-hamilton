@@ -2,6 +2,7 @@ const express = require('express');
 const Turf = require('../models/Turf');
 const verifyToken = require('../middleware/verifyToken');
 const requireAdmin = require('../middleware/requireAdmin');
+const log = require('../utils/log');
 
 const router = express.Router();
 
@@ -67,9 +68,10 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
       isBookable,
       availableTimeSlots,
     });
-
+    log.info('[Turf] Created', { by: req.user.userId, id: turf._id, name: turf.name });
     return res.status(201).json(turf);
   } catch (err) {
+    log.error('[Turf] Create failed', err?.message || err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -89,8 +91,10 @@ router.put('/:id', verifyToken, requireAdmin, async (req, res) => {
     const updates = req.body;
     const turf = await Turf.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!turf) return res.status(404).json({ message: 'Turf not found' });
+    log.info('[Turf] Updated', { by: req.user.userId, id: turf._id });
     return res.json(turf);
   } catch (err) {
+    log.error('[Turf] Update failed', err?.message || err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
@@ -99,8 +103,10 @@ router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const turf = await Turf.findByIdAndDelete(req.params.id);
     if (!turf) return res.status(404).json({ message: 'Turf not found' });
+    log.info('[Turf] Deleted', { by: req.user.userId, id: req.params.id });
     return res.json({ message: 'Deleted' });
   } catch (err) {
+    log.error('[Turf] Delete failed', err?.message || err);
     return res.status(500).json({ message: 'Server error' });
   }
 });

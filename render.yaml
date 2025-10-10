@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: teamup-backend
+    env: node
+    repo: https://github.com/OWNER/REPO
+    branch: main
+    autoDeploy: true
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false  # set in Render Dashboard (secret)
+      - key: MONGO_DB_NAME
+        value: teamup-hamilton
+      - key: JWT_SECRET
+        sync: false  # set in Render Dashboard (secret)
+      - key: CORS_ORIGIN
+        value: https://YOUR-SITE.netlify.app
+
+# Replace OWNER/REPO and YOUR-SITE before using the blueprint.
+# After pushing, in Render: New > Blueprint > select this repo.

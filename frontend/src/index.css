@@ -96,6 +96,8 @@ a:hover {
 .app-main {
   flex: 1;
   padding-block: clamp(2.5rem, 4vw + 1rem, 4.5rem);
+  /* Prevent content from being hidden behind fixed footer */
+  padding-bottom: clamp(100px, 14vh, 160px);
 }
 
 .app-hero {
@@ -432,6 +434,12 @@ a:hover {
   border-top: 1px solid rgba(148, 163, 184, 0.18);
   backdrop-filter: blur(14px);
   box-shadow: 0 -16px 40px -32px rgba(15, 23, 42, 0.45);
+  /* Keep footer visible at the bottom of the viewport */
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1020;
 }
 
 .app-footer__inner {

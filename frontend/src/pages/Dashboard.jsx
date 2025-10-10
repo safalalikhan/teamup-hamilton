@@ -186,10 +186,101 @@ export default function Dashboard() {
     }
   };
 
+  // Build derived lists
+  const nowTs = Date.now();
+  const allById = React.useMemo(() => {
+    const map = new Map();
+    [...matches, ...pastMatches].forEach((m) => map.set(m._id || m.id, m));
+    return Array.from(map.values());
+  }, [matches, pastMatches]);
+  const cancelledMatches = React.useMemo(
+    () => allById.filter((m) => String(m.status) === 'Cancelled'),
+    [allById]
+  );
+  const purePastMatches = React.useMemo(
+    () => pastMatches.filter((m) => String(m.status) !== 'Cancelled'),
+    [pastMatches]
+  );
+
   return (
     <Layout>
       <PageHeader title="Dashboard" />
 
+        {/* Upcoming first */}
+        <Card title="Upcoming Matches" subtitle="Join an open game or create one below.">
+          {error && <div className="text-danger small mb-2">{error}</div>}
+          {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
+          <div className="scroll-area">
+          <ul className="list-group list-group-flush mb-0">
+            {matches.map((m) => {
+              const joined = isParticipant(m);
+              const userStatus = getUserStatus(m);
+              const statusLabel = userStatus === 'going'
+                ? 'Going'
+                : userStatus === 'maybe'
+                  ? 'Maybe'
+                  : userStatus === 'not_going'
+                    ? 'Not going'
+                    : '';
+              const isPending = pending.id === m._id;
+              const isToday = !!m.isToday;
+              const spotsLeft = m.spotsLeft ?? null;
+              const turfLabel = m.turf?.name ? `@ ${m.turf.name}` : '';
+              return (
+                <li key={m._id} className={`list-group-item py-3 ${isToday ? 'match-today' : ''}`}>
+                  <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+                    <div className="flex-grow-1">
+                      <div className="d-flex flex-wrap align-items-center gap-2 fw-semibold">
+                        <span>{new Date(m.date).toLocaleString()}</span>
+                        {turfLabel && <span className="badge bg-light text-muted">{turfLabel}</span>}
+                        {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
+                        {m.status === 'Cancelled' && <span className="badge bg-success-subtle text-success">Cancelled</span>}
+                      </div>
+                      <div className="small text-muted mt-1 d-flex flex-wrap gap-2 align-items-center">
+                        <span>{statusLabel || 'No RSVP yet'}</span>
+                        {spotsLeft != null && (
+                          <span className="badge bg-light text-muted">Spots left: {spotsLeft}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-shrink-0">
+                      <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary flex-fill flex-sm-auto">View details</Link>
+                      <div className="btn-group" role="group" aria-label="RSVP">
+                        <button
+                          onClick={() => rsvp(m._id, 'going')}
+                          className={`btn ${userStatus === 'going' ? 'btn-success text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'going') || (joined && userStatus === 'going') || spotsLeft === 0 || m.status === 'Cancelled'}
+                          aria-disabled={!userId || spotsLeft === 0 || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : spotsLeft === 0 ? 'Match is full' : 'RSVP Going'}
+                        >{isPending && pending.action === 'going' ? '…' : 'Going'}</button>
+                        <button
+                          onClick={() => rsvp(m._id, 'maybe')}
+                          className={`btn ${userStatus === 'maybe' ? 'btn-warning text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'maybe') || m.status === 'Cancelled'}
+                          aria-disabled={!userId || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Maybe'}
+                        >{isPending && pending.action === 'maybe' ? '…' : 'Maybe'}</button>
+                        <button
+                          onClick={() => rsvp(m._id, 'not_going')}
+                          className={`btn ${userStatus === 'not_going' ? 'btn-danger text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'not_going') || m.status === 'Cancelled'}
+                          aria-disabled={!userId || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Not going'}
+                        >{isPending && pending.action === 'not_going' ? '…' : 'Not going'}</button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+            {!loading && matches.length === 0 && (
+              <li className="list-group-item text-muted small">No upcoming matches. Create one below.</li>
+            )}
+          </ul>
+          </div>
+        </Card>
+
+        {/* Create second */}
         <Card title="Create Match">
           <form onSubmit={create} className="row g-3">
             <div className="col-12 col-md-4">
@@ -286,123 +377,65 @@ export default function Dashboard() {
           </form>
         </Card>
 
-        <Card title="Upcoming Matches" subtitle="Join an open game or create one above.">
-          {error && <div className="text-danger small mb-2">{error}</div>}
-          {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
-          <div className="scroll-area">
-          <ul className="list-group list-group-flush mb-0">
-            {matches.map((m) => {
-              const joined = isParticipant(m);
-              const userStatus = getUserStatus(m);
-              const statusLabel = userStatus === 'going'
-                ? 'Going'
-                : userStatus === 'maybe'
-                  ? 'Maybe'
-                  : userStatus === 'not_going'
-                    ? 'Not going'
-                    : '';
-              const isPending = pending.id === m._id;
-              const isToday = !!m.isToday;
-              const spotsLeft = m.spotsLeft ?? null;
-              const turfLabel = m.turf?.name ? `@ ${m.turf.name}` : '';
-              return (
-                <li key={m._id} className={`list-group-item py-3 ${isToday ? 'match-today' : ''}`}>
-                  <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
-                    <div className="flex-grow-1">
-                      <div className="d-flex flex-wrap align-items-center gap-2 fw-semibold">
-                        <span>{new Date(m.date).toLocaleString()}</span>
-                        {turfLabel && <span className="badge bg-light text-muted">{turfLabel}</span>}
-                        {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
-                        {m.status === 'Cancelled' && <span className="badge bg-success-subtle text-success">Cancelled</span>}
-                      </div>
-                      <div className="small text-muted mt-1 d-flex flex-wrap gap-2 align-items-center">
-                        <span>{statusLabel || 'No RSVP yet'}</span>
-                        {spotsLeft != null && (
-                          <span className="badge bg-light text-muted">Spots left: {spotsLeft}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-shrink-0">
-                      <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary flex-fill flex-sm-auto">View details</Link>
-                      <div className="btn-group" role="group" aria-label="RSVP">
-                        <button
-                          onClick={() => rsvp(m._id, 'going')}
-                          className={`btn ${userStatus === 'going' ? 'btn-success text-white' : 'btn-outline-secondary bg-white'}`}
-                          disabled={!userId || (isPending && pending.action === 'going') || (joined && userStatus === 'going') || spotsLeft === 0 || m.status === 'Cancelled'}
-                          aria-disabled={!userId || spotsLeft === 0 || m.status === 'Cancelled'}
-                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : spotsLeft === 0 ? 'Match is full' : 'RSVP Going'}
-                        >{isPending && pending.action === 'going' ? '…' : 'Going'}</button>
-                        <button
-                          onClick={() => rsvp(m._id, 'maybe')}
-                          className={`btn ${userStatus === 'maybe' ? 'btn-warning text-white' : 'btn-outline-secondary bg-white'}`}
-                          disabled={!userId || (isPending && pending.action === 'maybe') || m.status === 'Cancelled'}
-                          aria-disabled={!userId || m.status === 'Cancelled'}
-                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Maybe'}
-                        >{isPending && pending.action === 'maybe' ? '…' : 'Maybe'}</button>
-                        <button
-                          onClick={() => rsvp(m._id, 'not_going')}
-                          className={`btn ${userStatus === 'not_going' ? 'btn-danger text-white' : 'btn-outline-secondary bg-white'}`}
-                          disabled={!userId || (isPending && pending.action === 'not_going') || m.status === 'Cancelled'}
-                          aria-disabled={!userId || m.status === 'Cancelled'}
-                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Not going'}
-                        >{isPending && pending.action === 'not_going' ? '…' : 'Not going'}</button>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-            {!loading && matches.length === 0 && (
-              <li className="list-group-item text-muted small">No upcoming matches. Create one above.</li>
-            )}
-          </ul>
-          </div>
-          {/* Infinite scroll replaces the manual load button */}
-        </Card>
-
-        {/* Past matches section */}
-        <Card title="Past Matches" subtitle="Browse results and revisit previous games">
-          <details className="past-matches" open={false}>
-            <summary className="d-flex justify-content-between align-items-center">
-              <span className="small text-muted">Show past matches ({pastMatches.length})</span>
-              <span className="small text-primary">Toggle</span>
-            </summary>
-            <div className="mt-3 scroll-area">
-              <div className="row g-3">
-                {pastMatches.map((m) => (
-                  <div key={m._id} className="col-12 col-md-6 col-lg-4">
-                    <div className="card h-100 shadow-sm border-0">
-                      <div className="card-body d-flex flex-column gap-2">
-                        <div className="d-flex justify-content-between align-items-start gap-2">
-                          <div>
-                            <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
-                            {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
+        {/* Past & Cancelled third */}
+        <Card title="Past & Cancelled Matches" subtitle="Browse previous games and cancellations">
+          <div className="row g-4">
+            <div className="col-12 col-xl-7">
+              <h3 className="h6 fw-semibold mb-2">Past Matches</h3>
+              <div className="scroll-area">
+                <div className="row g-3">
+                  {purePastMatches.map((m) => (
+                    <div key={m._id} className="col-12 col-md-6">
+                      <div className="card h-100 shadow-sm border-0">
+                        <div className="card-body d-flex flex-column gap-2">
+                          <div className="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                              <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                              {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
+                            </div>
+                            <span className="badge bg-light text-muted">{m.players?.length || 0} players</span>
                           </div>
-                          <span className="badge bg-light text-muted">{m.players?.length || 0} players</span>
-                        </div>
-                        <div className="d-flex flex-wrap gap-2 small text-muted">
-                          {m.status === 'Cancelled' ? (
-                            <span className="badge bg-success-subtle text-success">Cancelled</span>
-                          ) : (
+                          <div className="d-flex flex-wrap gap-2 small text-muted">
                             <span className="badge bg-secondary-subtle text-secondary">Completed</span>
-                          )}
-                          {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
+                            {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
+                          </div>
+                          <Link to={`/matches/${m._id}`} className="btn btn-outline-primary btn-sm mt-auto">View recap</Link>
                         </div>
-                        <Link to={`/matches/${m._id}`} className="btn btn-outline-primary btn-sm mt-auto">View recap</Link>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {!loading && pastMatches.length === 0 && (
-                  <div className="col-12">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-body text-muted small">No past matches yet.</div>
+                  ))}
+                  {!loading && purePastMatches.length === 0 && (
+                    <div className="col-12">
+                      <div className="card border-0 shadow-sm">
+                        <div className="card-body text-muted small">No past matches yet.</div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </details>
+            <div className="col-12 col-xl-5">
+              <h3 className="h6 fw-semibold mb-2">Cancelled Matches</h3>
+              <div className="scroll-area">
+                <ul className="list-group list-group-flush mb-0">
+                  {cancelledMatches.map((m) => (
+                    <li key={m._id} className="list-group-item d-flex flex-column gap-1">
+                      <div className="d-flex flex-wrap align-items-center gap-2 fw-semibold">
+                        <span>{new Date(m.date).toLocaleString()}</span>
+                        {m.turf?.name && <span className="badge bg-light text-muted">@ {m.turf.name}</span>}
+                        <span className="badge bg-success-subtle text-success">Cancelled</span>
+                      </div>
+                      {m.turf?.location?.address && <div className="small text-muted">{m.turf.location.address}</div>}
+                      <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm mt-1 align-self-start">Details</Link>
+                    </li>
+                  ))}
+                  {!loading && cancelledMatches.length === 0 && (
+                    <li className="list-group-item small text-muted">No cancelled matches.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
         </Card>
     </Layout>
   );

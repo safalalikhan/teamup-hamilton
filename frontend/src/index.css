@@ -542,7 +542,8 @@ a:hover {
 .scroll-area {
   /* Allow content to size naturally up to a cap; scroll when overflowing */
   max-height: clamp(280px, 50vh, 560px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (min-width: 992px) {
@@ -559,6 +560,12 @@ a:hover {
 /* Ensure a comfortable minimum when content is short */
 .scroll-area--section {
   min-height: clamp(140px, 24vh, 240px);
+}
+
+/* Prevent inner card content causing horizontal scroll */
+.app-card__body,
+.card .card-body {
+  overflow-x: hidden;
 }
 
 .scroll-area::-webkit-scrollbar {

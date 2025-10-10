@@ -13,13 +13,7 @@ export default function Footer() {
           <span>TeamUp Hamilton</span>
         </div>
 
-        {token && (
-          <nav className="app-footer__nav">
-            <Link to="/dashboard">Dashboard</Link>
-            <Link to="/turfs">Turfs</Link>
-            <Link to="/profile">Profile</Link>
-          </nav>
-        )}
+        {/* Keep footer clean – no primary navigation here */}
 
         <div className="text-muted small">© {new Date().getFullYear()} TeamUp Hamilton. All rights reserved.</div>
       </div>

@@ -519,3 +519,18 @@ a:hover {
 .bg-surface-strong {
   background: var(--surface-strong) !important;
 }
+
+/* Scrollable content containers --------------------------------- */
+.scroll-area {
+  /* Fix the height of busy sections and allow internal scrolling */
+  max-height: clamp(280px, 55vh, 560px);
+  overflow: auto;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+}

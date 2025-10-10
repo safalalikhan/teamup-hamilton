@@ -289,7 +289,8 @@ export default function Dashboard() {
         <Card title="Upcoming Matches" subtitle="Join an open game or create one above.">
           {error && <div className="text-danger small mb-2">{error}</div>}
           {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
-          <ul className="list-group list-group-flush">
+          <div className="scroll-area">
+          <ul className="list-group list-group-flush mb-0">
             {matches.map((m) => {
               const joined = isParticipant(m);
               const userStatus = getUserStatus(m);
@@ -355,6 +356,7 @@ export default function Dashboard() {
               <li className="list-group-item text-muted small">No upcoming matches. Create one above.</li>
             )}
           </ul>
+          </div>
           {/* Infinite scroll replaces the manual load button */}
         </Card>
 
@@ -365,7 +367,7 @@ export default function Dashboard() {
               <span className="small text-muted">Show past matches ({pastMatches.length})</span>
               <span className="small text-primary">Toggle</span>
             </summary>
-            <div className="mt-3">
+            <div className="mt-3 scroll-area">
               <div className="row g-3">
                 {pastMatches.map((m) => (
                   <div key={m._id} className="col-12 col-md-6 col-lg-4">

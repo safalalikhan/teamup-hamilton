@@ -372,7 +372,8 @@ export default function Turfs() {
         ) : turfs.length === 0 ? (
           <div className="py-4 small text-muted">No turfs found.</div>
         ) : (
-          <ul className="list-group list-group-flush">
+          <div className="scroll-area">
+          <ul className="list-group list-group-flush mb-0">
             {turfs.map((t) => (
               <li key={t._id} className="list-group-item">
                 <div className="fw-semibold">{t.name}</div>
@@ -399,6 +400,7 @@ export default function Turfs() {
               </li>
             ))}
           </ul>
+          </div>
         )}
       </Card>
     </Layout>

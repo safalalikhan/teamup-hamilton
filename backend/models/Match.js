@@ -6,6 +6,12 @@ const matchSchema = new mongoose.Schema(
     time: { type: String, trim: true }, // optional "18:30"
     turf: { type: mongoose.Schema.Types.ObjectId, ref: 'Turf' },
 
+    location: {
+      address: { type: String, trim: true },
+      lat: Number,
+      lng: Number,
+    },
+
     players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
     // RSVP statuses for each user

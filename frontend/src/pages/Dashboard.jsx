@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LocationPicker from '../components/LocationPicker';
 
 export default function Dashboard() {
   const [matches, setMatches] = useState([]);
@@ -13,8 +14,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ date: '', time: '', turf: '', capacity: '' });
+  const [form, setForm] = useState({
+    date: '',
+    time: '',
+    turf: '',
+    capacity: '',
+    locationAddress: '',
+    lat: null,
+    lng: null,
+  });
   const [turfs, setTurfs] = useState([]);
+  const [radiusKm, setRadiusKm] = useState(5);
+  const [loadingTurfs, setLoadingTurfs] = useState(false);
   const [pending, setPending] = useState({ id: null, action: null });
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
@@ -65,8 +76,29 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadMatches();
-    api.get('/api/turfs').then((res) => setTurfs(res.data || [])).catch(() => setTurfs([]));
   }, []);
+
+  const fetchTurfs = useCallback(async () => {
+    setLoadingTurfs(true);
+    try {
+      const params = {};
+      if (form.lat != null && form.lng != null) {
+        params.lat = form.lat;
+        params.lng = form.lng;
+        params.radiusKm = radiusKm;
+      }
+      const res = await api.get('/api/turfs', { params });
+      setTurfs(res.data || []);
+    } catch {
+      setTurfs([]);
+    } finally {
+      setLoadingTurfs(false);
+    }
+  }, [form.lat, form.lng, radiusKm]);
+
+  useEffect(() => {
+    fetchTurfs();
+  }, [fetchTurfs]);
 
   // Infinite scroll for upcoming matches
   useEffect(() => {
@@ -87,6 +119,18 @@ export default function Dashboard() {
     if (!userId) return false;
     return (match.players || []).some((p) => (p._id || p.id) === userId);
   }, [userId]);
+
+  const getUserStatus = useCallback((match) => {
+    if (!userId) return null;
+    const rsvps = Array.isArray(match.rsvps) ? match.rsvps : [];
+    const entry = rsvps.find((r) => {
+      const val = r.user?._id || r.user?.id || r.user;
+      return val && String(val) === String(userId);
+    });
+    if (entry?.status) return entry.status;
+    if (isParticipant(match)) return 'going';
+    return null;
+  }, [userId, isParticipant]);
 
   const rsvp = async (id, status) => {
     if (!userId) return;
@@ -118,9 +162,25 @@ export default function Dashboard() {
       const payload = { date: form.date, time: form.time || undefined, turf: form.turf || undefined };
       const capNum = Number(form.capacity);
       if (!Number.isNaN(capNum) && capNum > 0) payload.capacity = capNum;
+      if (form.lat != null && form.lng != null) {
+        payload.location = {
+          address: form.locationAddress || undefined,
+          lat: form.lat,
+          lng: form.lng,
+        };
+      }
       await api.post('/api/matches', payload);
-      setForm({ date: '', time: '', turf: '', capacity: '' });
+      setForm({
+        date: '',
+        time: '',
+        turf: '',
+        capacity: '',
+        locationAddress: '',
+        lat: null,
+        lng: null,
+      });
       await loadMatches();
+      setRadiusKm(5);
     } finally {
       setCreating(false);
     }
@@ -131,24 +191,96 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" />
 
         <Card title="Create Match">
-          <form onSubmit={create} className="row g-2 align-items-center">
-            <div className="col-12 col-sm-auto">
-              <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="form-control" />
+          <form onSubmit={create} className="row g-3">
+            <div className="col-12 col-md-4">
+              <label className="form-label">Kick-off</label>
+              <input
+                type="datetime-local"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                className="form-control"
+              />
             </div>
-            <div className="col-12 col-sm-auto">
-              <input type="text" placeholder="Time (optional)" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="form-control" />
+            <div className="col-12 col-md-3">
+              <label className="form-label">Time label (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g., Evening session"
+                value={form.time}
+                onChange={(e) => setForm({ ...form, time: e.target.value })}
+                className="form-control"
+              />
             </div>
-            <div className="col-12 col-sm-auto">
-              <select value={form.turf} onChange={(e) => setForm({ ...form, turf: e.target.value })} className="form-select">
-                <option value="">Select turf (optional)</option>
-                {turfs.map((t) => (
-                  <option key={t._id} value={t._id}>{t.name}</option>
+            <div className="col-12">
+              <label className="form-label">Match location</label>
+              <LocationPicker
+                value={{
+                  address: form.locationAddress || '',
+                  lat: form.lat ?? undefined,
+                  lng: form.lng ?? undefined,
+                }}
+                onChange={(loc) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    locationAddress: loc.address || '',
+                    lat: loc.lat ?? null,
+                    lng: loc.lng ?? null,
+                  }))
+                }
+              />
+              <div className="form-text">Drop a pin where players should meet; nearby turfs will auto-populate below.</div>
+            </div>
+            <div className="col-12 col-md-3">
+              <label className="form-label">Show turfs within</label>
+              <select
+                value={String(radiusKm)}
+                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                className="form-select"
+                disabled={loadingTurfs || form.lat == null || form.lng == null}
+              >
+                {[5, 10, 20].map((km) => (
+                  <option key={km} value={km}>{km} km</option>
                 ))}
               </select>
             </div>
-            <div className="col-12 col-sm-auto">
-              <button disabled={creating} className={`btn btn-primary ${creating ? 'disabled' : ''}`}>
-                {creating ? 'Creating...' : 'Create'}
+            <div className="col-12 col-md-5">
+              <label className="form-label">Nearby turfs (optional)</label>
+              <select
+                value={form.turf}
+                onChange={(e) => setForm({ ...form, turf: e.target.value })}
+                className="form-select"
+                disabled={loadingTurfs}
+              >
+                <option value="">Select turf</option>
+                {turfs.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.name}{typeof t.distanceKm === 'number' ? ` (${t.distanceKm} km)` : ''}
+                  </option>
+                ))}
+              </select>
+              {loadingTurfs ? (
+                <div className="form-text text-muted">Searching for turfs…</div>
+              ) : (!form.lat || !form.lng) ? (
+                <div className="form-text text-muted">Pick a location above to tailor the list.</div>
+              ) : turfs.length === 0 ? (
+                <div className="form-text text-muted">No turfs found within {radiusKm} km.</div>
+              ) : null}
+            </div>
+            <div className="col-12 col-md-2">
+              <label className="form-label">Capacity</label>
+              <input
+                type="number"
+                min="1"
+                className="form-control"
+                placeholder="e.g., 12"
+                value={form.capacity}
+                onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+              />
+              <div className="form-text">Leave blank for unlimited spots.</div>
+            </div>
+            <div className="col-12 col-md-2 d-flex align-items-end">
+              <button disabled={creating} className={`btn btn-primary w-100 ${creating ? 'disabled' : ''}`}>
+                {creating ? 'Creating…' : 'Create match'}
               </button>
             </div>
           </form>
@@ -160,52 +292,61 @@ export default function Dashboard() {
           <ul className="list-group list-group-flush">
             {matches.map((m) => {
               const joined = isParticipant(m);
+              const userStatus = getUserStatus(m);
+              const statusLabel = userStatus === 'going'
+                ? 'Going'
+                : userStatus === 'maybe'
+                  ? 'Maybe'
+                  : userStatus === 'not_going'
+                    ? 'Not going'
+                    : '';
               const isPending = pending.id === m._id;
               const isToday = !!m.isToday;
               const spotsLeft = m.spotsLeft ?? null;
+              const turfLabel = m.turf?.name ? `@ ${m.turf.name}` : '';
               return (
-                <li key={m._id} className={`list-group-item d-flex align-items-center justify-content-between ${isToday ? 'match-today' : ''}`}>
-                  <div>
-                    <div className="fw-semibold d-flex align-items-center gap-2">
-                      <span>{new Date(m.date).toLocaleString()}</span>
-                      {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
+                <li key={m._id} className={`list-group-item py-3 ${isToday ? 'match-today' : ''}`}>
+                  <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+                    <div className="flex-grow-1">
+                      <div className="d-flex flex-wrap align-items-center gap-2 fw-semibold">
+                        <span>{new Date(m.date).toLocaleString()}</span>
+                        {turfLabel && <span className="badge bg-light text-muted">{turfLabel}</span>}
+                        {isToday && <span className="badge bg-success-subtle text-success">Today</span>}
+                        {m.status === 'Cancelled' && <span className="badge bg-success-subtle text-success">Cancelled</span>}
+                      </div>
+                      <div className="small text-muted mt-1 d-flex flex-wrap gap-2 align-items-center">
+                        <span>{statusLabel || 'No RSVP yet'}</span>
+                        {spotsLeft != null && (
+                          <span className="badge bg-light text-muted">Spots left: {spotsLeft}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="small text-muted">
-                      Going: {m.goingCount ?? (m.players?.length || 0)}
-                      {typeof m.maybeCount === 'number' ? ` · Maybe: ${m.maybeCount}` : ''}
-                      {typeof m.notGoingCount === 'number' ? ` · Not going: ${m.notGoingCount}` : ''}
-                      {spotsLeft != null ? ` · Spots left: ${spotsLeft}` : ''}
+                    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 flex-shrink-0">
+                      <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary flex-fill flex-sm-auto">View details</Link>
+                      <div className="btn-group" role="group" aria-label="RSVP">
+                        <button
+                          onClick={() => rsvp(m._id, 'going')}
+                          className={`btn ${userStatus === 'going' ? 'btn-success text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'going') || (joined && userStatus === 'going') || spotsLeft === 0 || m.status === 'Cancelled'}
+                          aria-disabled={!userId || spotsLeft === 0 || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : spotsLeft === 0 ? 'Match is full' : 'RSVP Going'}
+                        >{isPending && pending.action === 'going' ? '…' : 'Going'}</button>
+                        <button
+                          onClick={() => rsvp(m._id, 'maybe')}
+                          className={`btn ${userStatus === 'maybe' ? 'btn-warning text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'maybe') || m.status === 'Cancelled'}
+                          aria-disabled={!userId || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Maybe'}
+                        >{isPending && pending.action === 'maybe' ? '…' : 'Maybe'}</button>
+                        <button
+                          onClick={() => rsvp(m._id, 'not_going')}
+                          className={`btn ${userStatus === 'not_going' ? 'btn-danger text-white' : 'btn-outline-secondary bg-white'}`}
+                          disabled={!userId || (isPending && pending.action === 'not_going') || m.status === 'Cancelled'}
+                          aria-disabled={!userId || m.status === 'Cancelled'}
+                          title={!userId ? 'Sign in to RSVP' : m.status === 'Cancelled' ? 'Match cancelled' : 'RSVP Not going'}
+                        >{isPending && pending.action === 'not_going' ? '…' : 'Not going'}</button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="d-flex gap-1">
-                    <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm">View</Link>
-                    <div className="btn-group btn-group-sm" role="group" aria-label="RSVP">
-                      <button
-                        onClick={() => rsvp(m._id, 'going')}
-                        className={`btn btn-primary btn-sm ${joined ? '' : 'btn-outline-primary'}`}
-                        disabled={!userId || (isPending && pending.action === 'going') || joined || spotsLeft === 0}
-                        aria-disabled={!userId || joined || spotsLeft === 0}
-                        title={!userId ? 'Sign in to RSVP' : joined ? 'You are going' : spotsLeft === 0 ? 'Match is full' : 'RSVP Going'}
-                      >{isPending && pending.action === 'going' ? '...' : 'Going'}</button>
-                      <button
-                        onClick={() => rsvp(m._id, 'maybe')}
-                        className="btn btn-outline-secondary btn-sm"
-                        disabled={!userId || (isPending && pending.action === 'maybe')}
-                        aria-disabled={!userId}
-                        title={!userId ? 'Sign in to RSVP' : 'RSVP Maybe'}
-                      >{isPending && pending.action === 'maybe' ? '...' : 'Maybe'}</button>
-                      <button
-                        onClick={() => rsvp(m._id, 'not_going')}
-                        className="btn btn-outline-secondary btn-sm"
-                        disabled={!userId || (isPending && pending.action === 'not_going')}
-                        aria-disabled={!userId}
-                        title={!userId ? 'Sign in to RSVP' : 'RSVP Not going'}
-                      >{isPending && pending.action === 'not_going' ? '...' : 'Not going'}</button>
-                    </div>
-                  </div>
-                  <div className="ms-2 d-flex align-items-center gap-2">
-                    {spotsLeft === 0 && <span className="badge bg-danger">FULL</span>}
-                    {m.status === 'Cancelled' && <span className="badge bg-secondary">Cancelled</span>}
                   </div>
                 </li>
               );
@@ -218,25 +359,49 @@ export default function Dashboard() {
         </Card>
 
         {/* Past matches section */}
-        <Card title="Past Matches" subtitle="Completed or older matches are archived here.">
-          <details>
-            <summary className="small text-muted">Show past matches ({pastMatches.length})</summary>
-            <ul className="list-group list-group-flush mt-2">
-              {pastMatches.map((m) => (
-                <li key={m._id} className="list-group-item d-flex align-items-center justify-content-between">
-                  <div>
-                    <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
-                    <div className="small text-muted">Players: {m.players?.length || 0}</div>
+        <Card title="Past Matches" subtitle="Browse results and revisit previous games">
+          <details className="past-matches" open={false}>
+            <summary className="d-flex justify-content-between align-items-center">
+              <span className="small text-muted">Show past matches ({pastMatches.length})</span>
+              <span className="small text-primary">Toggle</span>
+            </summary>
+            <div className="mt-3">
+              <div className="row g-3">
+                {pastMatches.map((m) => (
+                  <div key={m._id} className="col-12 col-md-6 col-lg-4">
+                    <div className="card h-100 shadow-sm border-0">
+                      <div className="card-body d-flex flex-column gap-2">
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <div className="fw-semibold">{new Date(m.date).toLocaleString()}</div>
+                            {m.turf?.name && <div className="small text-muted">@ {m.turf.name}</div>}
+                          </div>
+                          <span className="badge bg-light text-muted">{m.players?.length || 0} players</span>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2 small text-muted">
+                          {m.status === 'Cancelled' ? (
+                            <span className="badge bg-success-subtle text-success">Cancelled</span>
+                          ) : (
+                            <span className="badge bg-secondary-subtle text-secondary">Completed</span>
+                          )}
+                          {m.turf?.location?.address && <span className="badge bg-light text-muted">{m.turf.location.address}</span>}
+                        </div>
+                        <Link to={`/matches/${m._id}`} className="btn btn-outline-primary btn-sm mt-auto">View recap</Link>
+                      </div>
+                    </div>
                   </div>
-                  <Link to={`/matches/${m._id}`} className="btn btn-outline-secondary btn-sm">View</Link>
-                </li>
-              ))}
-              {!loading && pastMatches.length === 0 && (
-                <li className="list-group-item text-muted small">No past matches.</li>
-              )}
-            </ul>
+                ))}
+                {!loading && pastMatches.length === 0 && (
+                  <div className="col-12">
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-body text-muted small">No past matches yet.</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </details>
-          </Card>
+        </Card>
     </Layout>
   );
 }

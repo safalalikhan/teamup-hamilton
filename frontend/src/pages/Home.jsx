@@ -75,7 +75,9 @@ export default function Home() {
     };
 
     try {
-      const { data } = await api.get('/api/announcements');
+      const params = new URLSearchParams();
+      if (isAdmin) params.set('includeExpired', 'true');
+      const { data } = await api.get(`/api/announcements${params.toString() ? `?${params.toString()}` : ''}`);
       const manual = Array.isArray(data)
         ? data.map((item) => ({ ...item, type: item.type || 'manual' }))
         : [];
@@ -94,7 +96,7 @@ export default function Home() {
     } finally {
       setAnnLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     loadEvents();
@@ -415,6 +417,14 @@ export default function Home() {
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {!isAdmin && (
+              <div className="card shadow-sm mb-4">
+                <div className="card-body small text-muted">
+                  Organisers can publish trainings and announcements. Contact an admin if you need access.
                 </div>
               </div>
             )}

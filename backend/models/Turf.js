@@ -18,5 +18,7 @@ const turfSchema = new mongoose.Schema(
 
 // Helpful index for search/sort by name
 turfSchema.index({ name: 1 });
+// Useful for recent-first lists
+turfSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Turf', turfSchema);

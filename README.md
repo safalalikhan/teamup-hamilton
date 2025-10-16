@@ -46,3 +46,23 @@
 | Design     | Figma                                 |
 
 ---
+
+## 🔧 Deploy & Debug
+
+- Backend (Render)
+  - Root: `backend`
+  - Build: `npm install`
+  - Start: `npm start`
+  - Health: `/health`
+  - Env: `MONGO_URI`, `MONGO_DB_NAME`, `JWT_SECRET`, `NODE_ENV=production`, `CORS_ORIGIN=https://<your-netlify>.netlify.app`
+
+- Frontend (Netlify)
+  - Base: `frontend`
+  - Build: `npm run build`
+  - Publish: `dist`
+  - Env: `VITE_API_URL=https://<your-render>.onrender.com`, `VITE_GOOGLE_MAPS_API_KEY=<key>`
+
+- Debugging
+  - Every response includes `X-Request-Id`. Use it to find the exact request in Render logs (morgan prints `rid=`).
+  - CORS errors: ensure Netlify origin is listed in `CORS_ORIGIN` on Render.
+  - Health: check `/health` returns `{ ok: true }` after deploy.

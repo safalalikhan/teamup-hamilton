@@ -58,11 +58,11 @@ router.get('/:id', async (req, res) => {
   try {
     const match = await Match.findById(req.params.id)
       .populate('turf')
-      .populate('players', 'name email skillLevel preferredPosition');
+      .populate('players', 'name email skillLevel preferredPosition')
+      .lean({ virtuals: true });
     if (!match) return res.status(404).json({ message: 'Match not found' });
-    const obj = match.toObject({ virtuals: true });
-    Object.assign(obj, computeDerived(obj));
-    return res.json(obj);
+    Object.assign(match, computeDerived(match));
+    return res.json(match);
   } catch (err) {
     return res.status(500).json({ message: 'Server error' });
   }
@@ -209,16 +209,11 @@ router.get('/announcements/upcoming', async (req, res) => {
     const windowHours = Math.max(1, Math.min(168, Number(req.query.windowHours) || 24));
     const now = new Date();
     const end = new Date(now.getTime() + windowHours * 3600 * 1000);
-    const raw = await Match.find({ date: { $gte: now, $lte: end }, status: { $ne: 'Cancelled' } })
+    const list = await Match.find({ date: { $gte: now, $lte: end }, status: { $ne: 'Cancelled' } })
       .populate('turf')
-      .sort({ date: 1 });
-    const list = raw
-      .map((m) => {
-        const obj = m.toObject();
-        const derived = computeDerived(obj);
-        Object.assign(obj, derived);
-        return obj;
-      })
+      .sort({ date: 1 })
+      .lean()
+      .then((arr) => arr.map((obj) => Object.assign(obj, computeDerived(obj))))
       .filter((m) => m.spotsLeft == null || m.spotsLeft > 0);
     return res.json(list);
   } catch (err) {

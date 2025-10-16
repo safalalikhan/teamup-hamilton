@@ -8,7 +8,7 @@ const log = require('../utils/log');
 // Get all events (public)
 router.get('/', async (_req, res) => {
   try {
-    const events = await Event.find().sort({ date: 1, createdAt: -1 });
+    const events = await Event.find().sort({ date: 1, createdAt: -1 }).lean();
     res.json(events);
   } catch (error) {
     log.error('[Events GET]', error?.message || error);

@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     if (hasGoalposts !== undefined) query.hasGoalposts = hasGoalposts === 'true';
     if (isBookable !== undefined) query.isBookable = isBookable === 'true';
 
-    const docs = await Turf.find(query).sort({ createdAt: -1 });
+    const docs = await Turf.find(query).sort({ createdAt: -1 }).lean();
 
     const latNum = Number(lat);
     const lngNum = Number(lng);
@@ -78,7 +78,7 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const turf = await Turf.findById(req.params.id);
+    const turf = await Turf.findById(req.params.id).lean();
     if (!turf) return res.status(404).json({ message: 'Turf not found' });
     return res.json(turf);
   } catch (err) {

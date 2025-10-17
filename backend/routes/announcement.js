@@ -3,6 +3,7 @@ const router = express.Router();
 const Announcement = require('../models/Announcement');
 const verifyToken = require('../middleware/verifyToken');
 const requireAdmin = require('../middleware/requireAdmin');
+const log = require('../utils/log');
 
 router.get('/', async (req, res) => {
   try {
@@ -42,7 +43,7 @@ router.get('/', async (req, res) => {
 
     return res.json(payload);
   } catch (error) {
-    console.error('[Announcements GET]', error);
+    log.error('[Announcements GET]', error?.message || error);
     return res.status(500).json({ message: 'Failed to load announcements' });
   }
 });
@@ -86,7 +87,7 @@ router.post('/', verifyToken, requireAdmin, async (req, res) => {
       expiresAt: doc.expiresAt,
     });
   } catch (error) {
-    console.error('[Announcements POST]', error);
+    log.error('[Announcements POST]', error?.message || error);
     return res.status(500).json({ message: 'Failed to create announcement' });
   }
 });

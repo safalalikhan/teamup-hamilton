@@ -185,7 +185,6 @@ export default function Turfs() {
         subtitle="Find suitable grounds and add new ones you know."
       />
 
-      {/* Create/Edit at the top */}
       <div className="row g-4 mb-4">
         {isAdmin ? (
           editingId ? (
@@ -324,7 +323,6 @@ export default function Turfs() {
         )}
       </div>
 
-      {/* Map and list side-by-side */}
       <div className="row g-4">
         <div className="col-lg-6">
           <Card title="Map Overview">

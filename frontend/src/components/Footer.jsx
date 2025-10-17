@@ -13,7 +13,6 @@ export default function Footer() {
           <span>TeamUp Hamilton</span>
         </div>
 
-        {/* Keep footer clean – no primary navigation here */}
 
         <div className="text-muted small">© {new Date().getFullYear()} TeamUp Hamilton. All rights reserved.</div>
       </div>

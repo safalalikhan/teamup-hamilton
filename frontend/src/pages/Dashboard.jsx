@@ -61,7 +61,6 @@ export default function Dashboard() {
         setMatches(list.filter((m) => new Date(m.date).getTime() >= now));
         setPastMatches(list.filter((m) => new Date(m.date).getTime() < now));
       }
-      // Update cursor and hasMore based on page
       if (list.length > 0) {
         const last = list[list.length - 1];
         if (last?.date) setCursor(new Date(last.date).toISOString());
@@ -100,7 +99,6 @@ export default function Dashboard() {
     fetchTurfs();
   }, [fetchTurfs]);
 
-  // Infinite scroll for upcoming matches
   useEffect(() => {
     const onScroll = () => {
       if (!hasMore || loading || loadingMore) return;
@@ -186,7 +184,6 @@ export default function Dashboard() {
     }
   };
 
-  // Build derived lists
   const nowTs = Date.now();
   const allById = React.useMemo(() => {
     const map = new Map();
@@ -208,7 +205,6 @@ export default function Dashboard() {
     <Layout>
       <PageHeader title="Dashboard" />
 
-        {/* Upcoming first */}
         <Card title="Upcoming Matches" subtitle="Join an open game or create one below." className="mb-4">
           {error && <div className="text-danger small mb-2">{error}</div>}
           {loading && <div className="py-2 d-flex justify-content-center"><Spinner label="Loading matches…" /></div>}
@@ -282,7 +278,6 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Create second */}
         <Card title="Create Match" className="mb-4">
           <form onSubmit={create} className="row g-3">
             <div className="col-12 col-md-4">
@@ -379,7 +374,6 @@ export default function Dashboard() {
           </form>
         </Card>
 
-        {/* Past & Cancelled third: separate cards, stacked lists */}
         <div className="row g-5 mt-3">
           <div className="col-12 col-xl-6">
             <Card title={`Past Matches (${pastCount})`} subtitle="Browse results and revisit previous games">

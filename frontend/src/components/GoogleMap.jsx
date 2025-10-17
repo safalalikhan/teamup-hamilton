@@ -21,7 +21,6 @@ export default function GoogleMap({ center, markers = [], height = 300, zoom = 1
         center,
         zoom,
         styles: [
-          // Slightly desaturated theme to fit green/white UI
           { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
           { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
           { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },

@@ -140,7 +140,6 @@ export default function Profile() {
               <div className="alert alert-danger" role="alert">{error}</div>
             )}
 
-            {/* Details and map side by side */}
             <div className="row g-4">
               <div className="col-lg-6">
                 <div className="row g-3">

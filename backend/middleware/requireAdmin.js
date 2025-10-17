@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const log = require('../utils/log');
 
 async function requireAdmin(req, res, next) {
   try {
@@ -25,7 +26,7 @@ async function requireAdmin(req, res, next) {
     req.adminUser = user;
     next();
   } catch (error) {
-    console.error('[requireAdmin]', error);
+    log.error('[requireAdmin]', error?.message || error);
     return res.status(500).json({ message: 'Server error' });
   }
 }
